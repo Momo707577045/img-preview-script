@@ -242,7 +242,7 @@
         font-size: 10px;
         color: #666;
         position: relative;
-        padding-bottom: 25px;
+        padding-bottom: 30px;
       }
 
       .image-name {
@@ -272,21 +272,43 @@
 
       .lock-btn {
         position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: #007bff;
+        top: 4px;
+        right: 4px;
+        background: rgba(0, 123, 255, 0.9);
         color: white;
         border: none;
         padding: 4px 8px;
         border-radius: 4px;
         cursor: pointer;
         font-size: 11px;
-        transition: background-color 0.2s;
+        transition: all 0.2s;
+        z-index: 10;
       }
 
       .lock-btn:hover {
-        background: #0056b3;
+        background: rgba(0, 86, 179, 0.9);
+        transform: scale(1.05);
+      }
+
+      .copy-code-btn {
+        position: absolute;
+        bottom: 4px;
+        left: 4px;
+        right: 4px;
+        background: rgba(40, 167, 69, 0.9);
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+        transition: all 0.2s;
+        z-index: 10;
+      }
+
+      .copy-code-btn:hover {
+        background: rgba(33, 136, 56, 0.9);
+        transform: scale(1.02);
       }
 
       /* 右侧内容区域 */
@@ -300,7 +322,6 @@
 
       /* 右侧上方固定预览区域 */
       .fixed-preview {
-        height: 200px;
         background: white;
         border: 1px solid #e0e0e0;
         border-radius: 8px;
@@ -313,7 +334,6 @@
       }
 
       .fixed-preview img {
-        max-width: 100%;
         max-height: 100%;
         object-fit: contain;
         background: white;
@@ -362,71 +382,7 @@
         background: #c82333;
       }
 
-      /* 右侧下方代码区域 */
-      .code-panel {
-        flex: 1;
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 20px;
-        overflow-y: auto;
-      }
 
-      .code-section {
-        margin-bottom: 20px;
-      }
-
-      .code-section h3 {
-        font-size: 16px;
-        margin-bottom: 10px;
-        color: #333;
-      }
-
-      .code-block {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 4px;
-        padding: 12px;
-        margin-bottom: 10px;
-        position: relative;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
-
-      .code-block:hover {
-        background: #e9ecef;
-      }
-
-      .code-block code {
-        font-family: "Consolas", "Monaco", monospace;
-        font-size: 13px;
-        color: #333;
-        white-space: pre-wrap;
-        word-break: break-all;
-      }
-
-      .copy-btn {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        background: #007bff;
-        color: white;
-        border: none;
-        padding: 4px 8px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 11px;
-        opacity: 0;
-        transition: opacity 0.2s;
-      }
-
-      .code-block:hover .copy-btn {
-        opacity: 1;
-      }
-
-      .copy-btn:hover {
-        background: #0056b3;
-      }
 
       /* 悬浮预览 */
       .hover-preview {
@@ -609,13 +565,14 @@
                 @error="handleImageError"
                 @load="onImageLoad"
               />
+              <button class="lock-btn" @click.stop="lockImage(image)">锁定</button>
+              <button class="copy-code-btn" @click.stop="copyImageCode(image)">复制代码</button>
               <div class="image-info">
                 <div class="image-name">{{ image.name }}</div>
                 <div class="image-path">{{ image.path }}</div>
                 <div class="image-dimensions" v-if="image.width && image.height">
                   {{ image.width }} × {{ image.height }}
                 </div>
-                <button class="lock-btn" @click.stop="lockImage(image)">锁定</button>
               </div>
             </div>
           </div>
@@ -638,30 +595,7 @@
             </div>
           </div>
 
-          <!-- 代码引用区域 -->
-          <div class="code-panel">
-            <div v-if="!currentImage" class="loading">
-              请选择一张图片查看引用方式
-            </div>
-            <div v-else>
-              <div
-                v-for="section in codeSamples"
-                :key="section.title"
-                class="code-section"
-              >
-                <h3>{{ section.title }}</h3>
-                <div
-                  v-for="(code, index) in section.samples"
-                  :key="index"
-                  class="code-block"
-                  @click="copyCode(code)"
-                >
-                  <code>{{ code }}</code>
-                  <button class="copy-btn">复制</button>
-                </div>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
 

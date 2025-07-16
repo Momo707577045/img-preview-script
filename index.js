@@ -55,24 +55,7 @@ new Vue({
             return sorted;
         },
         
-        codeSamples() {
-            if (!this.currentImage) return [];
-            
-            const imageName = this.getImageVariableName(this.currentImage.name);
-            const imagePath = this.currentImage.path;
-            const imageUrl = this.currentImage.url;
-            
-            return [
-                {
-                    title: 'Vue 组件引用',
-                    samples: [
-                        `<TaImgBox :image="images['${imageName}']" class="absolute top-100px left-40px" />`,
-                        `<img :src="require('@/assets/${imagePath}')" alt="${this.currentImage.name}" />`,
-                        `<el-image :src="images.${imageName}" fit="cover" />`
-                    ]
-                },
-            ];
-        }
+
     },
     
     async mounted() {
@@ -144,6 +127,20 @@ new Vue({
         // 设置背景类型
         setBackground(type) {
             this.backgroundType = type;
+        },
+        
+        // 复制图片代码
+        async copyImageCode(image) {
+            const imageName = this.getImageVariableName(image.name);
+            const code = `<TaImgBox :image="images['${imageName}']" class="absolute top-100px left-40px" />`;
+            
+            try {
+                await navigator.clipboard.writeText(code);
+                this.showToast('代码已复制到剪贴板');
+            } catch (err) {
+                // 兜底方案
+                this.fallbackCopyText(code);
+            }
         },
         
         // 开始拖拽调整
@@ -267,16 +264,7 @@ new Vue({
                 .toLowerCase();
         },
         
-        // 复制代码
-        async copyCode(code) {
-            try {
-                await navigator.clipboard.writeText(code);
-                this.showToast('代码已复制到剪贴板');
-            } catch (err) {
-                // 兜底方案
-                this.fallbackCopyText(code);
-            }
-        },
+
         
         // 兜底复制方案
         fallbackCopyText(text) {
@@ -305,16 +293,20 @@ new Vue({
             const toast = document.createElement('div');
             toast.style.cssText = `
                 position: fixed;
-                top: 20px;
-                right: 20px;
+                top: 20%;
+                left: 50%;
+                transform: translate(-20%, -50%);
                 background: #333;
                 color: white;
                 padding: 12px 20px;
-                border-radius: 4px;
+                border-radius: 8px;
                 z-index: 10000;
                 font-size: 14px;
                 opacity: 0;
-                transition: opacity 0.3s;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                min-width: 200px;
+                text-align: center;
             `;
             toast.textContent = message;
             
@@ -323,17 +315,19 @@ new Vue({
             // 显示动画
             setTimeout(() => {
                 toast.style.opacity = '1';
+                toast.style.transform = 'translate(-50%, -50%) scale(1)';
             }, 100);
             
             // 自动消失
             setTimeout(() => {
                 toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, -50%) scale(0.95)';
                 setTimeout(() => {
                     if (toast.parentNode) {
                         document.body.removeChild(toast);
                     }
                 }, 300);
-            }, 2000);
+            }, 1000);
         },
         
         // 绑定键盘事件
