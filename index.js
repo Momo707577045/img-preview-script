@@ -6,7 +6,11 @@ new Vue({
         currentImage: null,
         currentImageIndex: -1,
         lockedImage: null,
-        showModal: false,
+        hoverPreview: {
+            show: false,
+            image: null,
+            style: {}
+        },
         loading: true,
         error: null
     },
@@ -28,38 +32,6 @@ new Vue({
                         `<el-image :src="images.${imageName}" fit="cover" />`
                     ]
                 },
-                {
-                    title: 'React 组件引用',
-                    samples: [
-                        `import ${imageName} from './${imagePath}';`,
-                        `<img src={require('./${imagePath}')} alt="${this.currentImage.name}" />`,
-                        `<Image src="${imageUrl}" alt="${this.currentImage.name}" />`
-                    ]
-                },
-                {
-                    title: 'HTML 引用',
-                    samples: [
-                        `<img src="${imageUrl}" alt="${this.currentImage.name}" />`,
-                        `<img src="./${imagePath}" alt="${this.currentImage.name}" />`,
-                        `<div style="background-image: url('${imageUrl}')"></div>`
-                    ]
-                },
-                {
-                    title: 'CSS 引用',
-                    samples: [
-                        `.bg-image { background-image: url('${imageUrl}'); }`,
-                        `.bg-image { background-image: url('./${imagePath}'); }`,
-                        `background: url('${imageUrl}') no-repeat center/cover;`
-                    ]
-                },
-                {
-                    title: 'JavaScript 引用',
-                    samples: [
-                        `const ${imageName} = '${imageUrl}';`,
-                        `import ${imageName} from './${imagePath}';`,
-                        `const imageUrl = require('./${imagePath}');`
-                    ]
-                }
             ];
         }
     },
@@ -67,6 +39,7 @@ new Vue({
     async mounted() {
         await this.loadImages();
         this.bindKeyboardEvents();
+        this.initMasonryLayout();
     },
     
     methods: {
@@ -81,6 +54,13 @@ new Vue({
                 
                 if (result.success) {
                     this.images = result.data;
+                    // 图片数据加载完成后重新布局
+                    this.$nextTick(() => {
+                        // 等待图片加载完成后再布局
+                        setTimeout(() => {
+                            this.layoutMasonry();
+                        }, 100);
+                    });
                 } else {
                     this.error = '加载图片失败: ' + result.error;
                 }
@@ -95,25 +75,60 @@ new Vue({
         selectImage(index) {
             this.currentImageIndex = index;
             this.currentImage = this.images[index];
-            this.showImagePreview();
         },
         
-        // 显示图片预览弹窗
-        showImagePreview() {
-            if (!this.currentImage) return;
-            this.showModal = true;
+        // 显示悬浮预览
+        showHoverPreview(image, event) {
+            const rect = event.currentTarget.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // 预设最大尺寸
+            const maxPreviewWidth = 820; // 包含padding
+            const maxPreviewHeight = 820; // 包含padding
+            
+            // 计算初始位置
+            let left = rect.right + 10;
+            let top = rect.top;
+            
+            // 如果右侧空间不够，显示在左侧
+            if (left + maxPreviewWidth > viewportWidth) {
+                left = rect.left - maxPreviewWidth - 10;
+            }
+            
+            // 如果左侧空间也不够，居中显示
+            if (left < 0) {
+                left = Math.max(10, (viewportWidth - maxPreviewWidth) / 2);
+            }
+            
+            // 垂直位置调整
+            if (top + maxPreviewHeight > viewportHeight) {
+                top = Math.max(10, viewportHeight - maxPreviewHeight - 10);
+            }
+            
+            // 确保不超出屏幕顶部
+            if (top < 10) {
+                top = 10;
+            }
+            
+            this.hoverPreview = {
+                show: true,
+                image: image,
+                style: {
+                    left: left + 'px',
+                    top: top + 'px'
+                }
+            };
         },
         
-        // 关闭预览弹窗
-        closeModal() {
-            this.showModal = false;
+        // 隐藏悬浮预览
+        hideHoverPreview() {
+            this.hoverPreview.show = false;
         },
         
         // 锁定图片到右侧固定区域
-        lockImage() {
-            if (!this.currentImage) return;
-            this.lockedImage = this.currentImage;
-            this.closeModal();
+        lockImage(image) {
+            this.lockedImage = image || this.currentImage;
         },
         
         // 解锁固定图片
@@ -125,6 +140,13 @@ new Vue({
         handleImageError(event) {
             event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIxIDNIMTBMMTAgMjFIMjFWM1oiIGZpbGw9IiNmNWY1ZjUiLz4KPHBhdGggZD0iTTMgM0gxMEwxMCAyMUgzVjNaIiBmaWxsPSIjZTBlMGUwIi8+CjxwYXRoIGQ9Ik0xMiA4LjVMMTQuNSAxMUwxMiAxMy41TDkuNSAxMUwxMiA4LjVaIiBmaWxsPSIjOTk5Ii8+Cjwvc3ZnPgo=';
             event.target.style.opacity = '0.5';
+        },
+        
+        // 图片加载完成后重新布局
+        onImageLoad() {
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
         },
         
         // 获取图片变量名
@@ -208,10 +230,67 @@ new Vue({
         // 绑定键盘事件
         bindKeyboardEvents() {
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && this.showModal) {
-                    this.closeModal();
+                if (e.key === 'Escape' && this.hoverPreview.show) {
+                    this.hideHoverPreview();
                 }
             });
+        },
+        
+        // 初始化瀑布流布局
+        initMasonryLayout() {
+            this.$nextTick(() => {
+                this.layoutMasonry();
+                // 监听窗口大小变化
+                window.addEventListener('resize', () => {
+                    this.layoutMasonry();
+                });
+            });
+        },
+        
+        // 瀑布流布局计算
+        layoutMasonry() {
+            const container = document.getElementById('imageList');
+            if (!container) return;
+            
+            const items = container.querySelectorAll('.image-item');
+            if (items.length === 0) return;
+            
+            const containerWidth = container.offsetWidth;
+            // 根据屏幕宽度调整项目宽度
+            const isSmallScreen = window.innerWidth <= 768;
+            const itemWidth = isSmallScreen ? 80 : 200;
+            const gap = isSmallScreen ? 10 : 15;
+            const columns = Math.floor((containerWidth + gap) / (itemWidth + gap));
+            
+            if (columns <= 0) return;
+            
+            // 更新项目宽度
+            items.forEach(item => {
+                item.style.width = itemWidth + 'px';
+            });
+            
+            // 初始化每列的高度
+            const columnHeights = new Array(columns).fill(0);
+            
+            items.forEach((item, index) => {
+                // 找到最短的列
+                const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+                
+                // 计算位置
+                const x = shortestColumnIndex * (itemWidth + gap);
+                const y = columnHeights[shortestColumnIndex];
+                
+                // 设置位置
+                item.style.left = x + 'px';
+                item.style.top = y + 'px';
+                
+                // 更新该列的高度
+                columnHeights[shortestColumnIndex] += item.offsetHeight + gap;
+            });
+            
+            // 设置容器高度
+            const maxHeight = Math.max(...columnHeights);
+            container.style.height = maxHeight + 'px';
         }
     }
 });
