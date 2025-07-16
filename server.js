@@ -55,15 +55,50 @@ function getAllImages(dir, baseDir = dir) {
 }
 
 // 获取图片信息的API
-app.get('/api/images', (req, res) => {
+app.get('/api/images', async (req, res) => {
   try {
     const currentDir = process.cwd();
     const images = getAllImages(currentDir);
     
+    // 为每张图片添加尺寸信息
+    const imagesWithDimensions = await Promise.all(
+      images.map(async (image) => {
+        const ext = path.extname(image.fullPath).toLowerCase();
+        
+        // 如果不是SVG，尝试获取图片尺寸
+        if (ext !== '.svg') {
+          try {
+            const metadata = await sharp(image.fullPath).metadata();
+            return {
+              ...image,
+              width: metadata.width,
+              height: metadata.height,
+              format: metadata.format
+            };
+          } catch (err) {
+            console.warn('Could not get image metadata for', image.path, ':', err.message);
+            return {
+              ...image,
+              width: null,
+              height: null,
+              format: null
+            };
+          }
+        } else {
+          return {
+            ...image,
+            width: null,
+            height: null,
+            format: 'svg'
+          };
+        }
+      })
+    );
+    
     res.json({
       success: true,
-      data: images,
-      total: images.length
+      data: imagesWithDimensions,
+      total: imagesWithDimensions.length
     });
   } catch (error) {
     res.status(500).json({

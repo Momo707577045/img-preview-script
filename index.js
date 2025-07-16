@@ -6,6 +6,10 @@ new Vue({
         currentImage: null,
         currentImageIndex: -1,
         lockedImage: null,
+        sortBy: null,
+        sortOrder: 'asc',
+        backgroundType: 'white',
+        isResizing: false,
         hoverPreview: {
             show: false,
             image: null,
@@ -16,6 +20,41 @@ new Vue({
     },
     
     computed: {
+        sortedImages() {
+            if (!this.sortBy) {
+                return this.images;
+            }
+            
+            const sorted = [...this.images].sort((a, b) => {
+                let aValue, bValue;
+                
+                switch (this.sortBy) {
+                    case 'width':
+                        aValue = a.width || 0;
+                        bValue = b.width || 0;
+                        break;
+                    case 'height':
+                        aValue = a.height || 0;
+                        bValue = b.height || 0;
+                        break;
+                    case 'path':
+                        aValue = a.path || '';
+                        bValue = b.path || '';
+                        break;
+                    default:
+                        return 0;
+                }
+                
+                if (this.sortOrder === 'desc') {
+                    return bValue > aValue ? 1 : bValue < aValue ? -1 : 0;
+                } else {
+                    return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+                }
+            });
+            
+            return sorted;
+        },
+        
         codeSamples() {
             if (!this.currentImage) return [];
             
@@ -74,7 +113,77 @@ new Vue({
         // 选择图片
         selectImage(index) {
             this.currentImageIndex = index;
-            this.currentImage = this.images[index];
+            this.currentImage = this.sortedImages[index];
+        },
+        
+        // 切换排序
+        toggleSort(sortBy) {
+            if (this.sortBy === sortBy) {
+                // 如果点击的是当前排序字段，切换排序顺序
+                this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                // 如果点击的是不同的排序字段，设置为升序
+                this.sortBy = sortBy;
+                this.sortOrder = 'asc';
+            }
+            
+            // 重新布局
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
+        },
+        
+        // 获取排序图标
+        getSortIcon(sortBy) {
+            if (this.sortBy !== sortBy) {
+                return '↕';
+            }
+            return this.sortOrder === 'asc' ? '↑' : '↓';
+        },
+        
+        // 设置背景类型
+        setBackground(type) {
+            this.backgroundType = type;
+        },
+        
+        // 开始拖拽调整
+        startResize(event) {
+            this.isResizing = true;
+            document.body.classList.add('resizing');
+            
+            const startX = event.clientX;
+            const leftPanel = document.querySelector('.left-panel');
+            const container = document.querySelector('.container');
+            const startWidth = leftPanel.offsetWidth;
+            const containerWidth = container.offsetWidth;
+            
+            const onMouseMove = (e) => {
+                if (!this.isResizing) return;
+                
+                const deltaX = e.clientX - startX;
+                const newWidth = startWidth + deltaX;
+                const newWidthPercent = (newWidth / containerWidth) * 100;
+                
+                // 限制最小和最大宽度
+                if (newWidthPercent >= 20 && newWidthPercent <= 80) {
+                    leftPanel.style.width = newWidthPercent + '%';
+                }
+            };
+            
+            const onMouseUp = () => {
+                this.isResizing = false;
+                document.body.classList.remove('resizing');
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                
+                // 重新布局瀑布流
+                this.$nextTick(() => {
+                    this.layoutMasonry();
+                });
+            };
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
         },
         
         // 显示悬浮预览
@@ -242,7 +351,10 @@ new Vue({
                 this.layoutMasonry();
                 // 监听窗口大小变化
                 window.addEventListener('resize', () => {
-                    this.layoutMasonry();
+                    // 延迟执行以确保布局完成
+                    setTimeout(() => {
+                        this.layoutMasonry();
+                    }, 100);
                 });
             });
         },
