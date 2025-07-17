@@ -55,6 +55,190 @@
         gap: 10px;
       }
 
+      .folder-filter-btn {
+        background: #17a2b8;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .folder-filter-btn:hover {
+        background: #138496;
+      }
+
+      .folder-filter-btn.active {
+        background: #dc3545;
+      }
+
+      /* 文件夹过滤弹窗样式 */
+      .folder-filter-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .folder-filter-content {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        max-width: 600px;
+        max-height: 70vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        width: 90%;
+      }
+
+      .folder-filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      .folder-filter-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .folder-filter-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s;
+      }
+
+      .folder-filter-close:hover {
+        background: #f0f0f0;
+        color: #333;
+      }
+
+      .folder-filter-actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .folder-action-btn {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        color: #495057;
+        transition: all 0.2s;
+      }
+
+      .folder-action-btn:hover {
+        background: #e9ecef;
+        border-color: #dee2e6;
+      }
+
+      .folder-action-btn.select-all {
+        background: #28a745;
+        color: white;
+        border-color: #28a745;
+      }
+
+      .folder-action-btn.select-all:hover {
+        background: #218838;
+        border-color: #1e7e34;
+      }
+
+      .folder-action-btn.deselect-all {
+        background: #dc3545;
+        color: white;
+        border-color: #dc3545;
+      }
+
+      .folder-action-btn.deselect-all:hover {
+        background: #c82333;
+        border-color: #bd2130;
+      }
+
+      .folder-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .folder-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+      }
+
+      .folder-item:hover {
+        background: #f8f9fa;
+        border-color: #dee2e6;
+      }
+
+      .folder-item.disabled {
+        background: #f8f9fa;
+        color: #6c757d;
+        border-color: #e9ecef;
+      }
+
+      .folder-item.disabled:hover {
+        background: #e9ecef;
+      }
+
+      .folder-checkbox {
+        margin-right: 10px;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+      }
+
+      .folder-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .folder-path {
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
+      }
+
+      .folder-count {
+        font-size: 12px;
+        color: #666;
+      }
+
       .sort-controls {
         display: flex;
         gap: 12px;
@@ -505,9 +689,18 @@
           <div class="panel-header">
             <h2 class="panel-title">
               图片列表
-              <span class="image-count" v-if="sortedImages.length > 0"
-                >{{ sortedImages.length }}</span
+              <span class="image-count" v-if="filteredImages.length > 0"
+                >{{ filteredImages.length }}</span
               >
+              <button 
+                class="folder-filter-btn" 
+                :class="{ active: hasActiveFilters }"
+                @click="showFolderFilter"
+                title="文件夹过滤"
+              >
+                📁 过滤
+                <span v-if="hasActiveFilters">({{ activeFilterCount }})</span>
+              </button>
             </h2>
             <div class="sort-controls">
               <!-- 宽度排序 -->
@@ -611,12 +804,12 @@
             <div id="imageList">
             <div v-if="loading" class="loading">正在加载图片...</div>
             <div v-else-if="error" class="error">{{ error }}</div>
-            <div v-else-if="sortedImages.length === 0" class="error">
+            <div v-else-if="filteredImages.length === 0" class="error">
               未找到任何图片
             </div>
             <div
               v-else
-              v-for="(image, index) in sortedImages"
+              v-for="(image, index) in filteredImages"
               :key="image.path"
               class="image-item"
               :class="{ active: currentImageIndex === index }"
@@ -668,6 +861,44 @@
       <!-- 悬浮预览 -->
       <div class="hover-preview" v-if="hoverPreview.show" :style="hoverPreview.style">
         <img :src="hoverPreview.image.url" :alt="hoverPreview.image.name" />
+      </div>
+
+      <!-- 文件夹过滤弹窗 -->
+      <div class="folder-filter-modal" v-if="showFolderFilterModal" @click="hideFolderFilter">
+        <div class="folder-filter-content" @click.stop>
+          <div class="folder-filter-header">
+            <h3 class="folder-filter-title">文件夹过滤</h3>
+            <button class="folder-filter-close" @click="hideFolderFilter">×</button>
+          </div>
+          
+          <div class="folder-filter-actions">
+            <button class="folder-action-btn select-all" @click="selectAllFolders">全选</button>
+            <button class="folder-action-btn deselect-all" @click="deselectAllFolders">全不选</button>
+            <button class="folder-action-btn" @click="resetFolderFilter">重置</button>
+          </div>
+          
+          <div class="folder-list">
+            <div 
+              v-for="folder in folderList" 
+              :key="folder.path"
+              class="folder-item"
+              :class="{ disabled: !folder.enabled }"
+              @click="toggleFolder(folder)"
+            >
+              <input 
+                type="checkbox" 
+                class="folder-checkbox"
+                :checked="folder.enabled"
+                @change="toggleFolder(folder)"
+                @click.stop
+              />
+              <div class="folder-info">
+                <div class="folder-path">{{ folder.path || '根目录' }}</div>
+                <div class="folder-count">{{ folder.count }} 张图片</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </body>

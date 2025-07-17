@@ -6,9 +6,9 @@ new Vue({
         currentImage: null,
         currentImageIndex: -1,
         lockedImage: null,
-        sortBy: null,
+        sortBy: 'height',
         sortOrder: 'asc',
-        backgroundType: 'white',
+        backgroundType: 'gray',
         isResizing: false,
         hoverPreview: {
             show: false,
@@ -16,7 +16,11 @@ new Vue({
             style: {}
         },
         loading: true,
-        error: null
+        error: null,
+        // 文件夹过滤相关
+        showFolderFilterModal: false,
+        folderList: [],
+        folderFilters: {} // 存储文件夹的启用状态
     },
     
     computed: {
@@ -55,7 +59,30 @@ new Vue({
             return sorted;
         },
         
-
+        // 应用文件夹过滤后的图片列表
+        filteredImages() {
+            if (!this.hasActiveFilters) {
+                return this.sortedImages;
+            }
+            
+            const filtered = this.sortedImages.filter(image => {
+                const folderPath = this.getFolderPath(image.path);
+                const isEnabled = this.folderFilters[folderPath] !== false;
+                return isEnabled;
+            });
+            
+            return filtered;
+        },
+        
+        // 是否有激活的过滤器（即是否有被禁用的文件夹）
+        hasActiveFilters() {
+            return Object.values(this.folderFilters).some(enabled => enabled === false);
+        },
+        
+        // 激活的过滤器数量（被禁用的文件夹数量）
+        activeFilterCount() {
+            return Object.values(this.folderFilters).filter(enabled => enabled === false).length;
+        }
     },
     
     async mounted() {
@@ -76,6 +103,8 @@ new Vue({
                 
                 if (result.success) {
                     this.images = result.data;
+                    // 初始化文件夹列表
+                    this.initializeFolderList();
                     // 图片数据加载完成后重新布局
                     this.$nextTick(() => {
                         // 等待图片加载完成后再布局
@@ -96,7 +125,7 @@ new Vue({
         // 选择图片
         selectImage(index) {
             this.currentImageIndex = index;
-            this.currentImage = this.sortedImages[index];
+            this.currentImage = this.filteredImages[index];
         },
         
         // 设置升序排序
@@ -405,6 +434,132 @@ new Vue({
             // 设置容器高度
             const maxHeight = Math.max(...columnHeights);
             container.style.height = maxHeight + 'px';
+        },
+        
+        // 文件夹过滤相关方法
+        
+        // 初始化文件夹列表
+        initializeFolderList() {
+            const folderMap = new Map();
+            
+            this.images.forEach(image => {
+                const folderPath = this.getFolderPath(image.path);
+                
+                if (folderMap.has(folderPath)) {
+                    folderMap.get(folderPath).count++;
+                } else {
+                    folderMap.set(folderPath, {
+                        path: folderPath,
+                        count: 1,
+                        enabled: true
+                    });
+                }
+            });
+            
+            // 转换为数组并排序
+            this.folderList = Array.from(folderMap.values()).sort((a, b) => {
+                // 根目录排在最前面
+                if (a.path === '') return -1;
+                if (b.path === '') return 1;
+                return a.path.localeCompare(b.path);
+            });
+            
+            // 初始化过滤器状态 - 使用响应式对象
+            const filters = {};
+            this.folderList.forEach(folder => {
+                filters[folder.path] = true;
+            });
+            this.folderFilters = filters;
+        },
+        
+        // 从图片路径获取文件夹路径
+        getFolderPath(imagePath) {
+            const lastSlashIndex = imagePath.lastIndexOf('/');
+            const lastBackslashIndex = imagePath.lastIndexOf('\\');
+            const separatorIndex = Math.max(lastSlashIndex, lastBackslashIndex);
+            
+            if (separatorIndex === -1) {
+                return ''; // 根目录
+            }
+            
+            return imagePath.substring(0, separatorIndex);
+        },
+        
+        // 显示文件夹过滤弹窗
+        showFolderFilter() {
+            this.showFolderFilterModal = true;
+            // 更新文件夹列表的启用状态
+            this.folderList.forEach(folder => {
+                folder.enabled = this.folderFilters[folder.path] !== false;
+            });
+        },
+        
+        // 隐藏文件夹过滤弹窗
+        hideFolderFilter() {
+            this.showFolderFilterModal = false;
+        },
+        
+        // 切换文件夹启用状态
+        toggleFolder(folder) {
+            folder.enabled = !folder.enabled;
+            // 使用 Vue.set 确保响应式更新
+            this.$set(this.folderFilters, folder.path, folder.enabled);
+            
+            // 强制重新渲染
+            this.$forceUpdate();
+            
+            // 重新布局
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
+        },
+        
+        // 全选文件夹
+        selectAllFolders() {
+            this.folderList.forEach(folder => {
+                folder.enabled = true;
+                this.$set(this.folderFilters, folder.path, true);
+            });
+            
+            // 强制重新渲染
+            this.$forceUpdate();
+            
+            // 重新布局
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
+        },
+        
+        // 全不选文件夹
+        deselectAllFolders() {
+            this.folderList.forEach(folder => {
+                folder.enabled = false;
+                this.$set(this.folderFilters, folder.path, false);
+            });
+            
+            // 强制重新渲染
+            this.$forceUpdate();
+            
+            // 重新布局
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
+        },
+        
+        // 重置文件夹过滤
+        resetFolderFilter() {
+            this.folderList.forEach(folder => {
+                folder.enabled = true;
+                this.$set(this.folderFilters, folder.path, true);
+            });
+            
+            // 强制重新渲染
+            this.$forceUpdate();
+            
+            // 重新布局
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
         }
     }
 });
