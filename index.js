@@ -31,6 +31,9 @@ new Vue({
         hasSimilarityData: false, // 是否有相似度数据
         opencvReady: false, // OpenCV是否加载完成
         
+        // 选中功能相关
+        selectedImages: [], // 存储选中图片的路径
+        
 
     },
     
@@ -76,7 +79,7 @@ new Vue({
         
         // 应用文件夹过滤后的图片列表
         filteredImages() {
-            let filtered = this.sortedImages;
+            let filtered = this.images;
             
             // 应用文件夹过滤
             if (this.hasActiveFilters) {
@@ -87,7 +90,47 @@ new Vue({
                 });
             }
             
-            return filtered;
+            // 分离选中和未选中的图片
+            const selectedImages = filtered.filter(image => this.selectedImages.includes(image.path));
+            const unselectedImages = filtered.filter(image => !this.selectedImages.includes(image.path));
+            
+            // 只对未选中的图片进行排序
+            let sortedUnselected = unselectedImages;
+            if (this.sortBy) {
+                sortedUnselected = [...unselectedImages].sort((a, b) => {
+                    let aValue, bValue;
+                    
+                    switch (this.sortBy) {
+                        case 'width':
+                            aValue = a.width || 0;
+                            bValue = b.width || 0;
+                            break;
+                        case 'height':
+                            aValue = a.height || 0;
+                            bValue = b.height || 0;
+                            break;
+                        case 'path':
+                            aValue = a.path || '';
+                            bValue = b.path || '';
+                            break;
+                        case 'similarity':
+                            aValue = a.similarity || 0;
+                            bValue = b.similarity || 0;
+                            break;
+                        default:
+                            return 0;
+                    }
+                    
+                    if (this.sortOrder === 'desc') {
+                        return bValue > aValue ? 1 : bValue < aValue ? -1 : 0;
+                    } else {
+                        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+                    }
+                });
+            }
+            
+            // 选中的图片保持在顶部，未选中的图片按排序规则排列
+            return [...selectedImages, ...sortedUnselected];
         },
         
         // 是否有激活的过滤器（即是否有被禁用的文件夹）
@@ -98,7 +141,14 @@ new Vue({
         // 激活的过滤器数量（被禁用的文件夹数量）
         activeFilterCount() {
             return Object.values(this.folderFilters).filter(enabled => enabled === false).length;
-        }
+        },
+        
+        // 是否有选中的图片
+        hasSelectedImages() {
+            return this.selectedImages.length > 0;
+        },
+        
+
     },
     
     async mounted() {
@@ -144,6 +194,36 @@ new Vue({
             this.currentImageIndex = index;
             this.currentImage = this.filteredImages[index];
         },
+        
+        // 切换图片选中状态
+        toggleImageSelection(image) {
+            const index = this.selectedImages.indexOf(image.path);
+            if (index > -1) {
+                this.selectedImages.splice(index, 1);
+            } else {
+                this.selectedImages.push(image.path);
+            }
+            
+            // 重新布局
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
+        },
+        
+        // 检查图片是否被选中
+        isImageSelected(image) {
+            return this.selectedImages.includes(image.path);
+        },
+        
+        // 取消全选
+        deselectAllImages() {
+            this.selectedImages = []
+            // 重新布局
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
+        },
+
         
         // 设置升序排序
         setSortAsc(sortBy) {
