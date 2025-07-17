@@ -498,6 +498,26 @@
         font-size: 11px;
       }
 
+      .recognition-btn {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        background: rgba(40, 167, 69, 0.9);
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+        transition: all 0.2s;
+        z-index: 10;
+      }
+
+      .recognition-btn:hover {
+        background: rgba(33, 136, 56, 0.9);
+        transform: scale(1.05);
+      }
+
       .lock-btn {
         position: absolute;
         top: 4px;
@@ -554,31 +574,129 @@
         border: 1px solid #e0e0e0;
         border-radius: 8px;
         margin-bottom: 20px;
+        min-height: 300px;
+        max-height: 600px;
+        overflow: auto;
+        padding: 20px;
+      }
+
+      .preview-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      .image-wrapper {
+        position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
-        position: relative;
-        overflow: hidden;
+        flex: 1;
+        cursor: crosshair;
+        user-select: none;
       }
 
-      .fixed-preview img {
+      .image-wrapper img {
+        max-width: 100%;
         max-height: 100%;
         object-fit: contain;
         background: white;
         padding: 8px;
         border-radius: 4px;
+        display: block;
+      }
+
+      .preview-controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        justify-content: center;
+      }
+
+      /* 识别进度蒙层 */
+      .recognition-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(2px);
+      }
+
+      .recognition-progress {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        min-width: 300px;
+      }
+
+      .progress-text {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 20px;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #28a745, #20c997);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+        position: relative;
+      }
+
+      .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: progress-shine 2s infinite;
+      }
+
+      @keyframes progress-shine {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+
+      /* 保持原有的placeholder样式 */
+      .fixed-preview .placeholder {
+        color: #999;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 200px;
       }
 
       /* 固定预览背景样式 */
-      .bg-white .fixed-preview img {
+      .bg-white .image-wrapper img {
         background: white;
       }
 
-      .bg-gray .fixed-preview img {
+      .bg-gray .image-wrapper img {
         background: #6c757d;
       }
 
-      .bg-checkerboard .fixed-preview img {
+      .bg-checkerboard .image-wrapper img {
         background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
           linear-gradient(-45deg, #ccc 25%, transparent 25%),
           linear-gradient(45deg, transparent 75%, #ccc 75%),
@@ -587,15 +705,7 @@
         background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
       }
 
-      .fixed-preview .placeholder {
-        color: #999;
-        font-size: 14px;
-      }
-
       .unlock-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
         background: #dc3545;
         color: white;
         border: none;
@@ -617,50 +727,7 @@
         margin-bottom: 20px;
       }
 
-      .recognition-btn {
-        padding: 14px 28px;
-        border: none;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        min-width: 140px;
-        background: linear-gradient(135deg, #28a745, #20c997);
-        color: white;
-        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-        text-transform: none;
-        letter-spacing: 0.5px;
-      }
 
-      .recognition-btn:hover:not(.recognizing) {
-        background: linear-gradient(135deg, #218838, #1ea085);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
-      }
-
-      .recognition-btn.recognizing {
-        background: linear-gradient(135deg, #ffc107, #fd7e14);
-        color: #212529;
-        cursor: not-allowed;
-        animation: pulse 1.5s infinite;
-      }
-
-      .recognition-btn.has-data {
-        background: linear-gradient(135deg, #6c757d, #495057);
-        color: white;
-      }
-
-      .recognition-btn.has-data:hover {
-        background: linear-gradient(135deg, #5a6268, #3d4142);
-        transform: translateY(-2px);
-      }
-
-      @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-      }
 
       /* 悬浮预览 */
       .hover-preview {
@@ -758,6 +825,15 @@
       <div class="container">
         <!-- 左侧图片列表 -->
         <div class="left-panel">
+          <!-- 识别进度蒙层 -->
+          <div v-if="isRecognizing" class="recognition-overlay">
+            <div class="recognition-progress">
+              <div class="progress-text">{{ recognitionProgress }}</div>
+              <div class="progress-bar">
+                <div class="progress-fill" :style="{ width: recognitionProgressPercent + '%' }"></div>
+              </div>
+            </div>
+          </div>
           <div class="panel-header">
             <h2 class="panel-title">
               图片列表
@@ -916,6 +992,9 @@
                   @error="handleImageError"
                   @load="onImageLoad"
                 />
+                <button class="recognition-btn" @click.stop="lockAndRecognize(image)">
+                  识别
+                </button>
                 <button class="lock-btn" @click.stop="lockImage(image)">
                   锁定
                 </button>
@@ -956,23 +1035,14 @@
             <div v-if="!lockedImage" class="placeholder">
               点击图片并锁定后将在此处显示
             </div>
-            <div v-else>
-              <img :src="lockedImage.url" :alt="lockedImage.name" />
-              <button class="unlock-btn" @click="unlockImage">解锁</button>
+            <div v-else class="preview-container">
+              <div class="image-wrapper" ref="imageWrapper">
+                <img :src="lockedImage.url" :alt="lockedImage.name" ref="previewImage" />
+              </div>
             </div>
           </div>
 
-          <!-- 智能识别控制面板 -->
-          <button
-            v-if="lockedImage"
-            class="recognition-btn"
-            @click="toggleRecognition"
-            :class="{ 'recognizing': isRecognizing, 'has-data': hasSimilarityData }"
-          >
-            <span v-if="isRecognizing">{{ recognitionProgress }}</span>
-            <span v-else-if="hasSimilarityData">清除相似度</span>
-            <span v-else>开始识别</span>
-          </button>
+
         </div>
       </div>
 
