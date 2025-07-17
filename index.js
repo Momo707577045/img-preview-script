@@ -34,7 +34,11 @@ new Vue({
         // 选中功能相关
         selectedImages: [], // 存储选中图片的路径
         
-
+        // 粘贴功能相关
+        canPaste: false, // 是否可以粘贴
+        isDragOver: false, // 是否正在拖拽
+        pastedImages: [], // 存储粘贴的图片
+        previewImage: null, // 当前预览的图片
     },
     
     computed: {
@@ -80,6 +84,11 @@ new Vue({
         // 应用文件夹过滤后的图片列表
         filteredImages() {
             let filtered = this.images;
+            
+            // 剔除render-result目录中的图片
+            filtered = filtered.filter(image => {
+                return !image.path.includes('render-result');
+            });
             
             // 应用文件夹过滤
             if (this.hasActiveFilters) {
@@ -147,6 +156,13 @@ new Vue({
         hasSelectedImages() {
             return this.selectedImages.length > 0;
         },
+
+        // render-result目录中的图片
+        renderResultImages() {
+            return this.images.filter(image => {
+                return image.path.includes('render-result');
+            });
+        },
         
 
     },
@@ -156,6 +172,14 @@ new Vue({
         this.bindKeyboardEvents();
         this.initMasonryLayout();
         this.initOpenCV();
+        this.initPasteFunction();
+    },
+    
+    beforeDestroy() {
+        // 清理粘贴的图片资源
+        this.cleanupPastedImages();
+        // 移除事件监听器
+        document.removeEventListener('paste', this.handlePaste);
     },
     
     methods: {
@@ -172,6 +196,8 @@ new Vue({
                     this.images = result.data;
                     // 初始化文件夹列表
                     this.initializeFolderList();
+                    // 自动添加render-result目录中的图片到粘贴区域
+                    this.addRenderResultImages();
                     // 图片数据加载完成后重新布局
                     this.$nextTick(() => {
                         // 等待图片加载完成后再布局
@@ -279,8 +305,16 @@ new Vue({
         
         // 复制图片代码
         async copyImageCode(image) {
-            const imageName = this.getImageVariableName(image.name);
-            const code = `<TaImgBox :image="images['${imageName}']" class="absolute top-100px left-40px" />`;
+            let code;
+            
+            if (image.isPasted) {
+                // 对于粘贴的图片，生成base64代码
+                code = `<TaImgBox :image="pastedImages['${image.name}']" class="absolute top-100px left-40px" />`;
+            } else {
+                // 对于普通图片，使用原有的代码格式
+                const imageName = this.getImageVariableName(image.name);
+                code = `<TaImgBox :image="images['${imageName}']" class="absolute top-100px left-40px" />`;
+            }
             
             try {
                 await navigator.clipboard.writeText(code);
@@ -380,12 +414,17 @@ new Vue({
             this.hoverPreview.show = false;
         },
         
-        // 锁定图片到右侧固定区域（只锁定，不识别）
+        // 锁定图片（只锁定，不识别）
         lockImage(image) {
             this.lockedImage = image || this.currentImage;
             // 清除之前的相似度数据
             if (this.hasSimilarityData) {
                 this.clearRecognitionFilter();
+            }
+            
+            // 如果是粘贴的图片，显示特殊提示
+            if (image && image.isPasted) {
+                this.showToast(`已锁定粘贴的图片: ${image.name}`);
             }
         },
         
@@ -402,8 +441,14 @@ new Vue({
             });
         },
         
-        // 解锁固定图片
+        // 解锁图片
         unlockImage() {
+            // 如果当前锁定的是粘贴的图片，询问是否要清理
+            if (this.lockedImage && this.lockedImage.isPasted) {
+                if (confirm('是否要清理粘贴的图片？')) {
+                    this.cleanupPastedImages();
+                }
+            }
             this.lockedImage = null;
         },
         
@@ -965,9 +1010,217 @@ new Vue({
                 this.layoutMasonry();
             });
         },
-        
 
-        
+        // 初始化粘贴功能
+        initPasteFunction() {
+            // 检查剪贴板API是否可用
+            this.canPaste = navigator.clipboard && navigator.clipboard.read;
+            
+            // 监听全局粘贴事件
+            document.addEventListener('paste', this.handlePaste);
+            
+            // 监听键盘事件
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+                    this.pasteFromClipboard();
+                }
+            });
+        },
 
+        // 从剪贴板粘贴
+        async pasteFromClipboard() {
+            try {
+                if (!navigator.clipboard || !navigator.clipboard.read) {
+                    this.showToast('您的浏览器不支持剪贴板API，请使用拖拽功能');
+                    return;
+                }
+
+                const clipboardItems = await navigator.clipboard.read();
+                for (const clipboardItem of clipboardItems) {
+                    for (const type of clipboardItem.types) {
+                        if (type.startsWith('image/')) {
+                            const blob = await clipboardItem.getType(type);
+                            await this.processPastedImage(blob, '剪贴板图片');
+                            return;
+                        }
+                    }
+                }
+                this.showToast('剪贴板中没有图片');
+            } catch (error) {
+                console.error('粘贴失败:', error);
+                this.showToast('粘贴失败: ' + error.message);
+            }
+        },
+
+        // 处理拖拽事件
+        handleDragOver(e) {
+            e.preventDefault();
+            this.isDragOver = true;
+        },
+
+        handleDragLeave(e) {
+            e.preventDefault();
+            this.isDragOver = false;
+        },
+
+        handleDrop(e) {
+            e.preventDefault();
+            this.isDragOver = false;
+            
+            const files = Array.from(e.dataTransfer.files);
+            const imageFiles = files.filter(file => file.type.startsWith('image/'));
+            
+            if (imageFiles.length === 0) {
+                this.showToast('请拖拽图片文件');
+                return;
+            }
+
+            imageFiles.forEach(file => {
+                this.processPastedImage(file, file.name);
+            });
+        },
+
+        // 处理粘贴的图片
+        async processPastedImage(blob, name) {
+            try {
+                // 创建图片对象
+                const imageUrl = URL.createObjectURL(blob);
+                const img = new Image();
+                
+                img.onload = () => {
+                    const pastedImage = {
+                        url: imageUrl,
+                        name: name,
+                        path: `pasted/${name}`,
+                        width: img.width,
+                        height: img.height,
+                        isPasted: true, // 标记为粘贴的图片
+                        blob: blob // 保存blob引用
+                    };
+                    
+                    // 添加到粘贴图片列表
+                    this.pastedImages.push(pastedImage);
+                    
+                    // 自动锁定这张图片到预览区域
+                    this.lockImage(pastedImage);
+                    
+                    this.showToast(`成功粘贴并锁定图片: ${name}`);
+                };
+                
+                img.onerror = () => {
+                    this.showToast('图片加载失败');
+                    URL.revokeObjectURL(imageUrl);
+                };
+                
+                img.src = imageUrl;
+                
+            } catch (error) {
+                console.error('处理粘贴图片失败:', error);
+                this.showToast('处理图片失败: ' + error.message);
+            }
+        },
+
+        // 处理全局粘贴事件
+        handlePaste(e) {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const blob = item.getAsFile();
+                    if (blob) {
+                        this.processPastedImage(blob, '剪贴板图片');
+                    }
+                    break;
+                }
+            }
+        },
+
+        // 清理粘贴的图片资源
+        cleanupPastedImages() {
+            this.pastedImages.forEach(image => {
+                if (image.url && image.url.startsWith('blob:')) {
+                    URL.revokeObjectURL(image.url);
+                }
+            });
+            this.pastedImages = [];
+        },
+
+        // 添加render-result目录中的图片到粘贴区域
+        addRenderResultImages() {
+            this.renderResultImages.forEach(image => {
+                // 检查是否已经存在
+                const exists = this.pastedImages.some(pasted => pasted.path === image.path);
+                if (!exists) {
+                    const renderImage = {
+                        url: image.url,
+                        name: image.name,
+                        path: image.path,
+                        width: image.width,
+                        height: image.height,
+                        isPasted: true, // 标记为粘贴的图片
+                        isRenderResult: true // 标记为render-result图片
+                    };
+                    
+                    this.pastedImages.push(renderImage);
+                }
+            });
+            
+            if (this.renderResultImages.length > 0) {
+                this.showToast(`自动加载了 ${this.renderResultImages.length} 张render-result图片`);
+            }
+        },
+
+        // 删除单个粘贴的图片
+        removePastedImage(index) {
+            const image = this.pastedImages[index];
+            if (image) {
+                // 如果当前锁定的是这张图片，先解锁
+                if (this.lockedImage && this.lockedImage.path === image.path) {
+                    this.lockedImage = null;
+                }
+                
+                // 清理资源
+                if (image.url && image.url.startsWith('blob:')) {
+                    URL.revokeObjectURL(image.url);
+                }
+                
+                // 从数组中移除
+                this.pastedImages.splice(index, 1);
+                
+                this.showToast(`已删除图片: ${image.name}`);
+            }
+        },
+
+        // 切换粘贴图片的锁定状态
+        togglePastedImageLock(image) {
+            if (this.lockedImage && this.lockedImage.path === image.path) {
+                // 如果当前图片已锁定，则解锁
+                this.unlockImage();
+            } else {
+                // 否则锁定这张图片
+                this.lockImage(image);
+            }
+        },
+
+        // 显示完整图片预览
+        showFullPreview(image) {
+            this.previewImage = image;
+        },
+
+        // 关闭预览
+        closePreview() {
+            this.previewImage = null;
+        },
+
+        // 开始识别并设置预览图
+        startRecognitionWithPreview(image) {
+            // 设置预览图
+            this.previewImage = image;
+            // 开始智能识别
+            this.lockAndRecognize(image);
+        }
     }
 });

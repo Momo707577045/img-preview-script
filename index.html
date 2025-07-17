@@ -531,51 +531,12 @@
         font-size: 11px;
       }
 
-      .recognition-btn {
-        position: absolute;
-        top: 4px;
-        left: 4px;
-        background: rgba(40, 167, 69, 0.9);
-        color: white;
-        border: none;
-        padding: 4px 8px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 11px;
-        transition: all 0.2s;
-        z-index: 10;
-      }
 
-      .recognition-btn:hover {
-        background: rgba(33, 136, 56, 0.9);
-        transform: scale(1.05);
-      }
-
-      .lock-btn {
-        position: absolute;
-        top: 4px;
-        right: 4px;
-        background: rgba(0, 123, 255, 0.9);
-        color: white;
-        border: none;
-        padding: 4px 8px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 11px;
-        transition: all 0.2s;
-        z-index: 10;
-      }
-
-      .lock-btn:hover {
-        background: rgba(0, 86, 179, 0.9);
-        transform: scale(1.05);
-      }
 
       .selection-toggle-btn {
         position: absolute;
         top: 4px;
-        left: 50%;
-        transform: translateX(-50%);
+        right: 4px;
         background: rgba(40, 167, 69, 0.9);
         color: white;
         border: none;
@@ -595,7 +556,6 @@
 
       .selection-toggle-btn:hover {
         background: rgba(33, 136, 56, 0.9);
-        transform: translateX(-50%) scale(1.05);
       }
 
       .image-item.selected .selection-toggle-btn {
@@ -634,52 +594,307 @@
         display: flex;
         flex-direction: column;
         padding: 20px;
+        gap: 20px;
+        overflow-y: auto;
+        max-height: 100vh;
       }
 
-      /* 右侧上方固定预览区域 */
-      .fixed-preview {
+      /* 粘贴功能区域样式 */
+      .paste-section {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        transition: all 0.3s;
+        cursor: pointer;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+      }
+
+      .paste-section:hover {
+        border-color: #007bff;
+        background: #f0f8ff;
+      }
+
+      .paste-section.drag-over {
+        border-color: #28a745;
+        background: #f0fff0;
+        transform: scale(1.02);
+      }
+
+      .paste-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .paste-header h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+      }
+
+      .paste-btn {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .paste-btn:hover:not(:disabled) {
+        background: #218838;
+        transform: scale(1.02);
+      }
+
+      .paste-btn:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      .paste-tip {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 15px;
+        line-height: 1.4;
+      }
+
+      /* 粘贴图片列表样式 */
+      .pasted-images-list {
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .pasted-images-list h4 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 15px;
+      }
+
+      .pasted-images-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 10px;
+      }
+
+      .pasted-image-item {
+        position: relative;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+      }
+
+      .pasted-image-item:hover {
+        border-color: #007bff;
+        transform: scale(1.02);
+      }
+
+      .pasted-image-item.locked {
+        border-color: #28a745;
+        box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
+      }
+
+      .pasted-image-item img {
+        width: 100%;
+        height: 80px;
+        object-fit: cover;
+        display: block;
+      }
+
+      .pasted-image-info {
+        padding: 8px;
+        background: #f8f9fa;
+      }
+
+      .pasted-image-name {
+        font-size: 11px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .pasted-image-dimensions {
+        font-size: 10px;
+        color: #666;
+      }
+
+      .remove-pasted-btn {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: rgba(220, 53, 69, 0.9);
+        color: white;
+        border: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        z-index: 10;
+      }
+
+      .remove-pasted-btn:hover {
+        background: rgba(200, 35, 51, 0.9);
+        transform: scale(1.1);
+      }
+
+
+
+      .smart-recognition-btn-small {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        background: rgba(23, 162, 184, 0.9);
+        color: white;
+        border: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        z-index: 10;
+      }
+
+      .smart-recognition-btn-small:hover:not(:disabled) {
+        background: rgba(19, 132, 150, 0.9);
+        transform: scale(1.1);
+      }
+
+      .smart-recognition-btn-small:disabled {
+        background: rgba(108, 117, 125, 0.9);
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      /* 完整图片预览样式 */
+      .full-image-preview {
         background: white;
         border: 1px solid #e0e0e0;
         border-radius: 8px;
         margin-bottom: 20px;
-        min-height: 300px;
-        max-height: 600px;
-        overflow: auto;
-        padding: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       }
 
-      .preview-container {
+      .preview-header {
         display: flex;
-        flex-direction: column;
-        height: 100%;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e0e0e0;
       }
 
-      .image-wrapper {
-        position: relative;
+      .preview-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .close-preview-btn {
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #666;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s;
+      }
+
+      .close-preview-btn:hover {
+        background: #e9ecef;
+        color: #333;
+      }
+
+      .preview-image-container {
         display: flex;
         align-items: center;
         justify-content: center;
-        flex: 1;
-        cursor: crosshair;
-        user-select: none;
+        padding: 20px;
+        overflow: auto;
       }
 
-      .image-wrapper img {
+      .preview-image-container img {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
-        background: white;
-        padding: 8px;
         border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .preview-image-wrapper {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 20px;
+      }
+
+      .preview-image-wrapper img {
+        max-width: 100%;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         display: block;
       }
 
-      .preview-controls {
+      .preview-recognition-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(23, 162, 184, 0.9);
+        color: white;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 14px;
         display: flex;
-        gap: 10px;
-        margin-top: 15px;
+        align-items: center;
         justify-content: center;
+        transition: all 0.2s;
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       }
+
+      .preview-recognition-btn:hover:not(:disabled) {
+        background: rgba(19, 132, 150, 0.9);
+        transform: scale(1.1);
+      }
+
+      .preview-recognition-btn:disabled {
+        background: rgba(108, 117, 125, 0.9);
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+
 
       /* 识别进度蒙层 */
       .recognition-overlay {
@@ -745,47 +960,11 @@
         100% { transform: translateX(100%); }
       }
 
-      /* 保持原有的placeholder样式 */
-      .fixed-preview .placeholder {
-        color: #999;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 200px;
-      }
 
-      /* 固定预览背景样式 */
-      .bg-white .image-wrapper img {
-        background: white;
-      }
 
-      .bg-gray .image-wrapper img {
-        background: #6c757d;
-      }
 
-      .bg-checkerboard .image-wrapper img {
-        background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
-          linear-gradient(-45deg, #ccc 25%, transparent 25%),
-          linear-gradient(45deg, transparent 75%, #ccc 75%),
-          linear-gradient(-45deg, transparent 75%, #ccc 75%);
-        background-size: 20px 20px;
-        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-      }
 
-      .unlock-btn {
-        background: #dc3545;
-        color: white;
-        border: none;
-        padding: 4px 8px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 12px;
-      }
 
-      .unlock-btn:hover {
-        background: #c82333;
-      }
 
       /* 智能识别按钮样式 */
 
@@ -1071,12 +1250,6 @@
                   @error="handleImageError"
                   @load="onImageLoad"
                 />
-                <button class="recognition-btn" @click.stop="lockAndRecognize(image)">
-                  识别
-                </button>
-                <button class="lock-btn" @click.stop="lockImage(image)">
-                  锁定
-                </button>
                 <button 
                   class="selection-toggle-btn" 
                   @click.stop="toggleImageSelection(image)"
@@ -1116,14 +1289,58 @@
 
         <!-- 右侧内容区域 -->
         <div class="right-panel">
-          <!-- 固定预览区域 -->
-          <div class="fixed-preview">
-            <div v-if="!lockedImage" class="placeholder">
-              点击图片并锁定后将在此处显示
+          <!-- 粘贴功能区域 -->
+          <div 
+            class="paste-section"
+            @drop="handleDrop"
+            @dragover="handleDragOver"
+            @dragleave="handleDragLeave"
+            :class="{ 'drag-over': isDragOver }"
+          >
+           
+            <div class="paste-tip">
+              支持从剪贴板粘贴图片，或拖拽图片文件到此区域
             </div>
-            <div v-else class="preview-container">
-              <div class="image-wrapper" ref="imageWrapper">
-                <img :src="lockedImage.url" :alt="lockedImage.name" ref="previewImage" />
+            
+            <!-- 粘贴图片列表 -->
+            <div class="pasted-images-list" v-if="pastedImages.length > 0">
+              <!-- 完整图片预览区域 -->
+              <div class="preview-image-wrapper" v-if="previewImage">
+                <img :src="previewImage.url" :alt="previewImage.name" />
+                <button 
+                  class="preview-recognition-btn"
+                  @click="startRecognitionWithPreview(previewImage)"
+                  :disabled="isRecognizing"
+                  title="智能识别"
+                >
+                  🔍
+                </button>
+              </div>
+              <div class="pasted-images-grid">
+                <div 
+                  v-for="(image, index) in pastedImages" 
+                  :key="image.path"
+                  class="pasted-image-item"
+                  :class="{ 'locked': lockedImage && lockedImage.path === image.path }"
+                  @click="showFullPreview(image)"
+                >
+                  <img :src="image.url" :alt="image.name" />
+                  <button 
+                    class="smart-recognition-btn-small"
+                    @click.stop="startRecognitionWithPreview(image)"
+                    :disabled="isRecognizing"
+                    title="智能识别"
+                  >
+                    🔍
+                  </button>
+                  <button 
+                    class="remove-pasted-btn"
+                    @click.stop="removePastedImage(index)"
+                    title="删除此图片"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             </div>
           </div>
