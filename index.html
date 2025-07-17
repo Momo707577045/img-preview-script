@@ -300,6 +300,23 @@
         border: 1px solid #e9ecef;
       }
 
+      .sort-btn.similarity-sort {
+        background: #e3f2fd;
+        border-color: #2196f3;
+        color: #1976d2;
+      }
+
+      .sort-btn.similarity-sort:hover {
+        background: #bbdefb;
+        border-color: #1976d2;
+      }
+
+      .sort-btn.similarity-sort.active {
+        background: #2196f3;
+        border-color: #2196f3;
+        color: white;
+      }
+
       .background-controls {
         display: flex;
         gap: 4px;
@@ -358,7 +375,7 @@
       }
 
       .resizer::after {
-        content: '';
+        content: "";
         position: absolute;
         top: 0;
         left: -2px;
@@ -434,10 +451,9 @@
       }
 
       .bg-checkerboard .image-thumbnail {
-        background-image: 
-          linear-gradient(45deg, #ccc 25%, transparent 25%), 
-          linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-          linear-gradient(45deg, transparent 75%, #ccc 75%), 
+        background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
+          linear-gradient(-45deg, #ccc 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #ccc 75%),
           linear-gradient(-45deg, transparent 75%, #ccc 75%);
         background-size: 20px 20px;
         background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
@@ -471,6 +487,13 @@
       .image-dimensions {
         color: #666;
         font-weight: 500;
+        margin-top: 2px;
+        font-size: 11px;
+      }
+
+      .image-similarity {
+        color: #2196f3;
+        font-weight: 600;
         margin-top: 2px;
         font-size: 11px;
       }
@@ -556,10 +579,9 @@
       }
 
       .bg-checkerboard .fixed-preview img {
-        background-image: 
-          linear-gradient(45deg, #ccc 25%, transparent 25%), 
-          linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-          linear-gradient(45deg, transparent 75%, #ccc 75%), 
+        background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
+          linear-gradient(-45deg, #ccc 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #ccc 75%),
           linear-gradient(-45deg, transparent 75%, #ccc 75%);
         background-size: 20px 20px;
         background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
@@ -587,7 +609,58 @@
         background: #c82333;
       }
 
+      /* 智能识别按钮样式 */
 
+      .recognition-controls {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      .recognition-btn {
+        padding: 14px 28px;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 140px;
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        text-transform: none;
+        letter-spacing: 0.5px;
+      }
+
+      .recognition-btn:hover:not(.recognizing) {
+        background: linear-gradient(135deg, #218838, #1ea085);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+      }
+
+      .recognition-btn.recognizing {
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+        color: #212529;
+        cursor: not-allowed;
+        animation: pulse 1.5s infinite;
+      }
+
+      .recognition-btn.has-data {
+        background: linear-gradient(135deg, #6c757d, #495057);
+        color: white;
+      }
+
+      .recognition-btn.has-data:hover {
+        background: linear-gradient(135deg, #5a6268, #3d4142);
+        transform: translateY(-2px);
+      }
+
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
 
       /* 悬浮预览 */
       .hover-preview {
@@ -628,10 +701,9 @@
       }
 
       .bg-checkerboard .hover-preview img {
-        background-image: 
-          linear-gradient(45deg, #ccc 25%, transparent 25%), 
-          linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-          linear-gradient(45deg, transparent 75%, #ccc 75%), 
+        background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
+          linear-gradient(-45deg, #ccc 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #ccc 75%),
           linear-gradient(-45deg, transparent 75%, #ccc 75%);
         background-size: 20px 20px;
         background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
@@ -692,8 +764,8 @@
               <span class="image-count" v-if="filteredImages.length > 0"
                 >{{ filteredImages.length }}</span
               >
-              <button 
-                class="folder-filter-btn" 
+              <button
+                class="folder-filter-btn"
                 :class="{ active: hasActiveFilters }"
                 @click="showFolderFilter"
                 title="文件夹过滤"
@@ -705,16 +777,16 @@
             <div class="sort-controls">
               <!-- 宽度排序 -->
               <div class="sort-group">
-                <button 
-                  class="sort-btn asc" 
+                <button
+                  class="sort-btn asc"
                   :class="{ active: sortBy === 'width' && sortOrder === 'asc' }"
                   @click="setSortAsc('width')"
                   title="宽度升序"
                 >
                   宽度↑
                 </button>
-                <button 
-                  class="sort-btn desc" 
+                <button
+                  class="sort-btn desc"
                   :class="{ active: sortBy === 'width' && sortOrder === 'desc' }"
                   @click="setSortDesc('width')"
                   title="宽度降序"
@@ -722,19 +794,19 @@
                   宽度↓
                 </button>
               </div>
-              
+
               <!-- 高度排序 -->
               <div class="sort-group">
-                <button 
-                  class="sort-btn asc" 
+                <button
+                  class="sort-btn asc"
                   :class="{ active: sortBy === 'height' && sortOrder === 'asc' }"
                   @click="setSortAsc('height')"
                   title="高度升序"
                 >
                   高度↑
                 </button>
-                <button 
-                  class="sort-btn desc" 
+                <button
+                  class="sort-btn desc"
                   :class="{ active: sortBy === 'height' && sortOrder === 'desc' }"
                   @click="setSortDesc('height')"
                   title="高度降序"
@@ -742,19 +814,19 @@
                   高度↓
                 </button>
               </div>
-              
+
               <!-- 路径排序 -->
               <div class="sort-group">
-                <button 
-                  class="sort-btn asc" 
+                <button
+                  class="sort-btn asc"
                   :class="{ active: sortBy === 'path' && sortOrder === 'asc' }"
                   @click="setSortAsc('path')"
                   title="路径升序"
                 >
                   路径↑
                 </button>
-                <button 
-                  class="sort-btn desc" 
+                <button
+                  class="sort-btn desc"
                   :class="{ active: sortBy === 'path' && sortOrder === 'desc' }"
                   @click="setSortDesc('path')"
                   title="路径降序"
@@ -762,10 +834,30 @@
                   路径↓
                 </button>
               </div>
-              
+
+              <!-- 相似度排序 -->
+              <div class="sort-group" v-if="hasSimilarityData">
+                <button
+                  class="sort-btn asc similarity-sort"
+                  :class="{ active: sortBy === 'similarity' && sortOrder === 'asc' }"
+                  @click="setSortAsc('similarity')"
+                  title="相似度升序"
+                >
+                  相似度↑
+                </button>
+                <button
+                  class="sort-btn desc similarity-sort"
+                  :class="{ active: sortBy === 'similarity' && sortOrder === 'desc' }"
+                  @click="setSortDesc('similarity')"
+                  title="相似度降序"
+                >
+                  相似度↓
+                </button>
+              </div>
+
               <!-- 清除排序 -->
-              <button 
-                class="sort-btn clear" 
+              <button
+                class="sort-btn clear"
                 :class="{ active: !sortBy }"
                 @click="clearSort()"
                 title="清除排序"
@@ -774,24 +866,24 @@
               </button>
             </div>
             <div class="background-controls">
-              <button 
-                class="bg-btn" 
+              <button
+                class="bg-btn"
                 :class="{ active: backgroundType === 'white' }"
                 @click="setBackground('white')"
                 title="白色背景"
               >
                 ⚪
               </button>
-              <button 
-                class="bg-btn" 
+              <button
+                class="bg-btn"
                 :class="{ active: backgroundType === 'gray' }"
                 @click="setBackground('gray')"
                 title="灰色背景"
               >
                 ⚫
               </button>
-              <button 
-                class="bg-btn" 
+              <button
+                class="bg-btn"
                 :class="{ active: backgroundType === 'checkerboard' }"
                 @click="setBackground('checkerboard')"
                 title="棋盘背景"
@@ -802,41 +894,57 @@
           </div>
           <div class="panel-content">
             <div id="imageList">
-            <div v-if="loading" class="loading">正在加载图片...</div>
-            <div v-else-if="error" class="error">{{ error }}</div>
-            <div v-else-if="filteredImages.length === 0" class="error">
-              未找到任何图片
-            </div>
-            <div
-              v-else
-              v-for="(image, index) in filteredImages"
-              :key="image.path"
-              class="image-item"
-              :class="{ active: currentImageIndex === index }"
-              @click="selectImage(index)"
-              @mouseenter="showHoverPreview(image, $event)"
-              @mouseleave="hideHoverPreview"
-            >
-              <img
-                class="image-thumbnail"
-                :src="image.url"
-                :alt="image.name"
-                @error="handleImageError"
-                @load="onImageLoad"
-              />
-              <button class="lock-btn" @click.stop="lockImage(image)">锁定</button>
-              <button class="copy-code-btn" @click.stop="copyImageCode(image)">复制代码</button>
-              <div class="image-info">
-                <div class="image-name">{{ image.name }}</div>
-                <div class="image-path">{{ image.path }}</div>
-                <div class="image-dimensions" v-if="image.width && image.height">
-                  {{ image.width }} × {{ image.height }}
+              <div v-if="loading" class="loading">正在加载图片...</div>
+              <div v-else-if="error" class="error">{{ error }}</div>
+              <div v-else-if="filteredImages.length === 0" class="error">
+                未找到任何图片
+              </div>
+              <div
+                v-else
+                v-for="(image, index) in filteredImages"
+                :key="image.path"
+                class="image-item"
+                :class="{ active: currentImageIndex === index }"
+                @click="selectImage(index)"
+                @mouseenter="showHoverPreview(image, $event)"
+                @mouseleave="hideHoverPreview"
+              >
+                <img
+                  class="image-thumbnail"
+                  :src="image.url"
+                  :alt="image.name"
+                  @error="handleImageError"
+                  @load="onImageLoad"
+                />
+                <button class="lock-btn" @click.stop="lockImage(image)">
+                  锁定
+                </button>
+                <button
+                  class="copy-code-btn"
+                  @click.stop="copyImageCode(image)"
+                >
+                  复制代码
+                </button>
+                <div class="image-info">
+                  <div class="image-name">{{ image.name }}</div>
+                  <div class="image-path">{{ image.path }}</div>
+                  <div
+                    class="image-dimensions"
+                    v-if="image.width && image.height"
+                  >
+                    {{ image.width }} × {{ image.height }}
+                  </div>
+                  <div
+                    class="image-similarity"
+                    v-if="hasSimilarityData && image.similarity !== undefined"
+                  >
+                    相似度: {{ Math.round(image.similarity * 100) }}%
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
         <!-- 分隔条 -->
         <div class="resizer" @mousedown="startResize"></div>
@@ -854,39 +962,71 @@
             </div>
           </div>
 
-
+          <!-- 智能识别控制面板 -->
+          <button
+            v-if="lockedImage"
+            class="recognition-btn"
+            @click="toggleRecognition"
+            :class="{ 'recognizing': isRecognizing, 'has-data': hasSimilarityData }"
+          >
+            <span v-if="isRecognizing">{{ recognitionProgress }}</span>
+            <span v-else-if="hasSimilarityData">清除相似度</span>
+            <span v-else>开始识别</span>
+          </button>
         </div>
       </div>
 
       <!-- 悬浮预览 -->
-      <div class="hover-preview" v-if="hoverPreview.show" :style="hoverPreview.style">
+      <div
+        class="hover-preview"
+        v-if="hoverPreview.show"
+        :style="hoverPreview.style"
+      >
         <img :src="hoverPreview.image.url" :alt="hoverPreview.image.name" />
       </div>
 
       <!-- 文件夹过滤弹窗 -->
-      <div class="folder-filter-modal" v-if="showFolderFilterModal" @click="hideFolderFilter">
+      <div
+        class="folder-filter-modal"
+        v-if="showFolderFilterModal"
+        @click="hideFolderFilter"
+      >
         <div class="folder-filter-content" @click.stop>
           <div class="folder-filter-header">
             <h3 class="folder-filter-title">文件夹过滤</h3>
-            <button class="folder-filter-close" @click="hideFolderFilter">×</button>
+            <button class="folder-filter-close" @click="hideFolderFilter">
+              ×
+            </button>
           </div>
-          
+
           <div class="folder-filter-actions">
-            <button class="folder-action-btn select-all" @click="selectAllFolders">全选</button>
-            <button class="folder-action-btn deselect-all" @click="deselectAllFolders">全不选</button>
-            <button class="folder-action-btn" @click="resetFolderFilter">重置</button>
+            <button
+              class="folder-action-btn select-all"
+              @click="selectAllFolders"
+            >
+              全选
+            </button>
+            <button
+              class="folder-action-btn deselect-all"
+              @click="deselectAllFolders"
+            >
+              全不选
+            </button>
+            <button class="folder-action-btn" @click="resetFolderFilter">
+              重置
+            </button>
           </div>
-          
+
           <div class="folder-list">
-            <div 
-              v-for="folder in folderList" 
+            <div
+              v-for="folder in folderList"
               :key="folder.path"
               class="folder-item"
               :class="{ disabled: !folder.enabled }"
               @click="toggleFolder(folder)"
             >
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 class="folder-checkbox"
                 :checked="folder.enabled"
                 @change="toggleFolder(folder)"
@@ -903,5 +1043,6 @@
     </div>
   </body>
   <script src="vue.js"></script>
+  <script src="opencv.min.js"></script>
   <script src="index.js"></script>
 </html>
