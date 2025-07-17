@@ -99,16 +99,10 @@ new Vue({
             this.currentImage = this.sortedImages[index];
         },
         
-        // 切换排序
-        toggleSort(sortBy) {
-            if (this.sortBy === sortBy) {
-                // 如果点击的是当前排序字段，切换排序顺序
-                this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
-            } else {
-                // 如果点击的是不同的排序字段，设置为升序
-                this.sortBy = sortBy;
-                this.sortOrder = 'asc';
-            }
+        // 设置升序排序
+        setSortAsc(sortBy) {
+            this.sortBy = sortBy;
+            this.sortOrder = 'asc';
             
             // 重新布局
             this.$nextTick(() => {
@@ -116,12 +110,26 @@ new Vue({
             });
         },
         
-        // 获取排序图标
-        getSortIcon(sortBy) {
-            if (this.sortBy !== sortBy) {
-                return '↕';
-            }
-            return this.sortOrder === 'asc' ? '↑' : '↓';
+        // 设置降序排序
+        setSortDesc(sortBy) {
+            this.sortBy = sortBy;
+            this.sortOrder = 'desc';
+            
+            // 重新布局
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
+        },
+        
+        // 清除排序
+        clearSort() {
+            this.sortBy = null;
+            this.sortOrder = 'asc';
+            
+            // 重新布局
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
         },
         
         // 设置背景类型

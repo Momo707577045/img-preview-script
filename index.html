@@ -26,7 +26,7 @@
 
       /* 左侧图片列表 */
       .left-panel {
-        width: 60%;
+        width: calc(100% - 400px);
         min-width: 300px;
         background: white;
         display: flex;
@@ -41,7 +41,7 @@
         top: 0;
         background: white;
         z-index: 100;
-        padding: 20px 20px 10px 20px;
+        padding: 10px 10px;
         border-bottom: 1px solid #f0f0f0;
       }
 
@@ -57,22 +57,32 @@
 
       .sort-controls {
         display: flex;
-        gap: 8px;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .sort-group {
+        display: flex;
+        gap: 2px;
         align-items: center;
       }
 
       .sort-btn {
         background: #f8f9fa;
         border: 1px solid #e9ecef;
-        padding: 6px 12px;
+        padding: 4px 8px;
         border-radius: 4px;
         cursor: pointer;
-        font-size: 12px;
+        font-size: 11px;
         color: #495057;
         transition: all 0.2s;
         display: flex;
         align-items: center;
-        gap: 4px;
+        justify-content: center;
+        min-width: 48px;
+        height: 28px;
+        white-space: nowrap;
       }
 
       .sort-btn:hover {
@@ -81,18 +91,29 @@
       }
 
       .sort-btn.active {
-        background: #007bff;
         color: white;
-        border-color: #007bff;
+        font-weight: 500;
       }
 
-      .sort-btn.active.desc {
+      .sort-btn.asc.active {
+        background: #28a745;
+        border-color: #28a745;
+      }
+
+      .sort-btn.desc.active {
         background: #dc3545;
         border-color: #dc3545;
       }
 
-      .sort-icon {
-        font-size: 10px;
+      .sort-btn.clear.active {
+        background: #6c757d;
+        border-color: #6c757d;
+      }
+
+      .sort-btn.clear {
+        margin-left: 8px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
       }
 
       .background-controls {
@@ -489,29 +510,74 @@
               >
             </h2>
             <div class="sort-controls">
+              <!-- 宽度排序 -->
+              <div class="sort-group">
+                <button 
+                  class="sort-btn asc" 
+                  :class="{ active: sortBy === 'width' && sortOrder === 'asc' }"
+                  @click="setSortAsc('width')"
+                  title="宽度升序"
+                >
+                  宽度↑
+                </button>
+                <button 
+                  class="sort-btn desc" 
+                  :class="{ active: sortBy === 'width' && sortOrder === 'desc' }"
+                  @click="setSortDesc('width')"
+                  title="宽度降序"
+                >
+                  宽度↓
+                </button>
+              </div>
+              
+              <!-- 高度排序 -->
+              <div class="sort-group">
+                <button 
+                  class="sort-btn asc" 
+                  :class="{ active: sortBy === 'height' && sortOrder === 'asc' }"
+                  @click="setSortAsc('height')"
+                  title="高度升序"
+                >
+                  高度↑
+                </button>
+                <button 
+                  class="sort-btn desc" 
+                  :class="{ active: sortBy === 'height' && sortOrder === 'desc' }"
+                  @click="setSortDesc('height')"
+                  title="高度降序"
+                >
+                  高度↓
+                </button>
+              </div>
+              
+              <!-- 路径排序 -->
+              <div class="sort-group">
+                <button 
+                  class="sort-btn asc" 
+                  :class="{ active: sortBy === 'path' && sortOrder === 'asc' }"
+                  @click="setSortAsc('path')"
+                  title="路径升序"
+                >
+                  路径↑
+                </button>
+                <button 
+                  class="sort-btn desc" 
+                  :class="{ active: sortBy === 'path' && sortOrder === 'desc' }"
+                  @click="setSortDesc('path')"
+                  title="路径降序"
+                >
+                  路径↓
+                </button>
+              </div>
+              
+              <!-- 清除排序 -->
               <button 
-                class="sort-btn" 
-                :class="{ active: sortBy === 'width', desc: sortBy === 'width' && sortOrder === 'desc' }"
-                @click="toggleSort('width')"
+                class="sort-btn clear" 
+                :class="{ active: !sortBy }"
+                @click="clearSort()"
+                title="清除排序"
               >
-                宽度
-                <span class="sort-icon">{{ getSortIcon('width') }}</span>
-              </button>
-              <button 
-                class="sort-btn" 
-                :class="{ active: sortBy === 'height', desc: sortBy === 'height' && sortOrder === 'desc' }"
-                @click="toggleSort('height')"
-              >
-                高度
-                <span class="sort-icon">{{ getSortIcon('height') }}</span>
-              </button>
-              <button 
-                class="sort-btn" 
-                :class="{ active: sortBy === 'path', desc: sortBy === 'path' && sortOrder === 'desc' }"
-                @click="toggleSort('path')"
-              >
-                路径
-                <span class="sort-icon">{{ getSortIcon('path') }}</span>
+                默认
               </button>
             </div>
             <div class="background-controls">
