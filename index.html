@@ -530,6 +530,7 @@
       }
 
       .image-name {
+        font-size: 12px;
         font-weight: 500;
         margin-bottom: 2px;
         color: #333;
@@ -547,11 +548,25 @@
         white-space: nowrap;
       }
 
+      .image-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 2px;
+        flex-wrap: wrap;
+        justify-content: space-between;
+      }
+
       .image-dimensions {
         color: #666;
         font-weight: 500;
-        margin-top: 2px;
         font-size: 11px;
+      }
+
+      .image-size {
+        color: #666;
+        font-size: 11px;
+        font-weight: 500;
       }
 
       .selection-toggle-btn {
@@ -1118,13 +1133,23 @@
                   新 tab 打开
                 </button>
                 <div class="image-info">
-                  <div class="image-name">{{ image.name }}</div>
-                  <div class="image-path">{{ image.path }}</div>
-                  <div
-                    class="image-dimensions"
-                    v-if="image.width && image.height"
-                  >
-                    {{ image.width }} × {{ image.height }}
+                  <div class="image-name" @click.stop="copyText(image.name)">{{ image.name }}</div>
+                  <div class="image-path" :title="image.path" @click.stop="copyText(image.path)">{{ image.path }}</div>
+                  <div class="image-meta">
+                    <span
+                      class="image-dimensions"
+                      v-if="image.width && image.height"
+                      @click.stop="copyText(image.width + ' × ' + image.height)"
+                    >
+                      {{ image.width }} × {{ image.height }}
+                    </span>
+                    <span
+                      class="image-size"
+                      v-if="image.size"
+                      @click.stop="copyText(formatFileSize(image.size))"
+                    >
+                      {{ formatFileSize(image.size) }}
+                    </span>
                   </div>
                 </div>
               </div>

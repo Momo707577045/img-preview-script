@@ -319,6 +319,17 @@ new Vue({
             this.backgroundType = type;
         },
         
+        // 格式化文件大小
+        formatFileSize(bytes) {
+            if (!bytes || bytes === 0) return '0 B';
+            
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return Math.round(bytes / Math.pow(k, i) * 10) / 10 + ' ' + sizes[i];
+        },
+        
         // 滚动到顶部
         scrollToTop() {
             const panelContent = document.querySelector('.panel-content');
@@ -343,12 +354,16 @@ new Vue({
                 code = `<TaImgBox :image="images['${imageName}']" class="absolute top-100px left-40px" />`;
             }
             
+            this.copyText(code);
+        },
+
+        async copyText(text) {
             try {
-                await navigator.clipboard.writeText(code);
-                this.showToast('代码已复制到剪贴板');
+                await navigator.clipboard.writeText(text);
+                this.showToast(text + '  已复制');
             } catch (err) {
                 // 兜底方案
-                this.fallbackCopyText(code);
+                this.fallbackCopyText(text);
             }
         },
         
