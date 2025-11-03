@@ -3,9 +3,60 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
+const { exec } = require('child_process');
 
 const app = express();
-const PORT = 3000;
+
+// 解析命令行参数
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const config = {
+    port: null,
+    dir: null
+  };
+  
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--port' || args[i] === '-p') {
+      config.port = parseInt(args[i + 1]);
+      i++;
+    } else if (args[i] === '--dir' || args[i] === '-d') {
+      config.dir = args[i + 1];
+      i++;
+    } else if (args[i].startsWith('--port=')) {
+      config.port = parseInt(args[i].split('=')[1]);
+    } else if (args[i].startsWith('--dir=')) {
+      config.dir = args[i].split('=')[1];
+    }
+  }
+  
+  return config;
+}
+
+// 获取随机端口（20000-25000）
+function getRandomPort() {
+  return Math.floor(Math.random() * (25000 - 20000 + 1)) + 20000;
+}
+
+// 解析命令行参数
+const config = parseArgs();
+
+// 确定端口
+const PORT = config.port || getRandomPort();
+
+// 确定扫描目录（默认是脚本所在目录）
+const SCRIPT_DIR = __dirname;
+let SCAN_DIR = config.dir ? path.resolve(config.dir) : SCRIPT_DIR;
+
+// 验证扫描目录是否存在
+if (!fs.existsSync(SCAN_DIR)) {
+  console.error(`错误: 指定的目录不存在: ${SCAN_DIR}`);
+  process.exit(1);
+}
+
+if (!fs.statSync(SCAN_DIR).isDirectory()) {
+  console.error(`错误: 指定的路径不是目录: ${SCAN_DIR}`);
+  process.exit(1);
+}
 
 // 中间件
 app.use(cors());
@@ -57,8 +108,7 @@ function getAllImages(dir, baseDir = dir) {
 // 获取图片信息的API
 app.get('/api/images', async (req, res) => {
   try {
-    const currentDir = process.cwd();
-    const images = getAllImages(currentDir);
+    const images = getAllImages(SCAN_DIR);
     
     // 为每张图片添加尺寸信息
     const imagesWithDimensions = await Promise.all(
@@ -112,10 +162,10 @@ app.get('/api/images', async (req, res) => {
 app.get('/images/*', (req, res) => {
   try {
     const imagePath = decodeURIComponent(req.params[0]);
-    const fullPath = path.join(process.cwd(), imagePath);
+    const fullPath = path.join(SCAN_DIR, imagePath);
     
     // 安全检查，防止路径遍历攻击
-    if (!fullPath.startsWith(process.cwd())) {
+    if (!fullPath.startsWith(SCAN_DIR)) {
       return res.status(403).json({ error: 'Access denied' });
     }
     
@@ -146,9 +196,9 @@ app.get('/images/*', (req, res) => {
 app.get('/api/image-info/:path(*)', async (req, res) => {
   try {
     const imagePath = decodeURIComponent(req.params.path);
-    const fullPath = path.join(process.cwd(), imagePath);
+    const fullPath = path.join(SCAN_DIR, imagePath);
     
-    if (!fullPath.startsWith(process.cwd())) {
+    if (!fullPath.startsWith(SCAN_DIR)) {
       return res.status(403).json({ error: 'Access denied' });
     }
     
@@ -192,10 +242,41 @@ app.get('/api/image-info/:path(*)', async (req, res) => {
 });
 
 // 静态文件服务（前端文件）
-app.use(express.static('.'));
+app.use(express.static(SCRIPT_DIR));
+
+// 打开浏览器的函数
+function openBrowser(url) {
+  const platform = process.platform;
+  let command;
+  
+  switch (platform) {
+    case 'darwin': // macOS
+      command = `open "${url}"`;
+      break;
+    case 'win32': // Windows
+      command = `start "" "${url}"`;
+      break;
+    default: // Linux 和其他
+      command = `xdg-open "${url}"`;
+      break;
+  }
+  
+  exec(command, (error) => {
+    if (error) {
+      console.warn('无法自动打开浏览器，请手动访问:', url);
+    }
+  });
+}
 
 // 启动服务器
 app.listen(PORT, () => {
-  console.log(`图片预览服务器运行在 http://localhost:${PORT}`);
-  console.log(`正在扫描目录: ${process.cwd()}`);
+  const url = `http://localhost:${PORT}`;
+  console.log(`图片预览服务器运行在 ${url}`);
+  console.log(`正在扫描目录: ${SCAN_DIR}`);
+  console.log(`使用端口: ${PORT}`);
+  
+  // 自动打开浏览器
+  setTimeout(() => {
+    openBrowser(url);
+  }, 500); // 延迟500ms确保服务器完全启动
 });
