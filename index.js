@@ -30,6 +30,9 @@ new Vue({
         isDragOver: false, // 是否正在拖拽
         pastedImages: [], // 存储粘贴的图片
         previewImage: null, // 当前预览的图片
+        
+        // 搜索功能相关
+        searchKeyword: '', // 搜索关键词
     },
     
     computed: {
@@ -83,6 +86,16 @@ new Vue({
                     const folderPath = this.getFolderPath(image.path);
                     const isEnabled = this.folderFilters[folderPath] !== false;
                     return isEnabled;
+                });
+            }
+            
+            // 应用搜索过滤
+            if (this.searchKeyword && this.searchKeyword.trim()) {
+                const keyword = this.searchKeyword.toLowerCase().trim();
+                filtered = filtered.filter(image => {
+                    const imageName = image.name.toLowerCase();
+                    const imagePath = image.path.toLowerCase();
+                    return imageName.includes(keyword) || imagePath.includes(keyword);
                 });
             }
             
@@ -150,6 +163,22 @@ new Vue({
 
     },
     
+    watch: {
+        // 监听搜索关键词变化
+        searchKeyword() {
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
+        },
+        
+        // 监听过滤后的图片列表变化
+        filteredImages() {
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
+        }
+    },
+    
     async mounted() {
         await this.loadImages();
         this.bindKeyboardEvents();
@@ -201,6 +230,12 @@ new Vue({
         selectImage(index) {
             this.currentImageIndex = index;
             this.currentImage = this.filteredImages[index];
+            this.copyImageCode(this.currentImage);
+        },
+        
+        // 新 tab 打开
+        openInNewTab(image) {
+            window.open(image.url, '_blank');
         },
         
         // 切换图片选中状态
@@ -266,6 +301,16 @@ new Vue({
             this.$nextTick(() => {
                 this.layoutMasonry();
                 this.scrollToTop();
+            });
+        },
+        
+        // 清除搜索
+        clearSearch() {
+            this.searchKeyword = '';
+            
+            // 重新布局
+            this.$nextTick(() => {
+                this.layoutMasonry();
             });
         },
         

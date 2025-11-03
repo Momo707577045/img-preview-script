@@ -319,6 +319,56 @@
         border: 1px solid #e9ecef;
       }
 
+      .search-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+        margin-left: 15px;
+      }
+
+      .search-input {
+        padding: 5px 30px 5px 10px;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        font-size: 12px;
+        outline: none;
+        transition: all 0.2s;
+        min-width: 260px;
+        height: 28px;
+      }
+
+      .search-input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+      }
+
+      .search-input::placeholder {
+        color: #999;
+      }
+
+      .clear-search-btn {
+        position: absolute;
+        right: 4px;
+        background: none;
+        border: none;
+        color: #999;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        transition: all 0.2s;
+      }
+
+      .clear-search-btn:hover {
+        background: #f0f0f0;
+        color: #333;
+      }
+
       .background-controls {
         display: flex;
         gap: 4px;
@@ -982,6 +1032,25 @@
               >
                 默认
               </button>
+              
+              <!-- 搜索输入框 -->
+              <div class="search-group">
+                <input 
+                  type="text" 
+                  class="search-input"
+                  v-model="searchKeyword"
+                  placeholder="🔍 搜索图片名称或路径..."
+                  title="输入关键词过滤图片"
+                />
+                <button 
+                  v-if="searchKeyword" 
+                  class="clear-search-btn"
+                  @click="clearSearch"
+                  title="清除搜索"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
             <div class="background-controls">
               <button
@@ -1044,9 +1113,9 @@
                 </button>
                 <button
                   class="copy-code-btn"
-                  @click.stop="copyImageCode(image)"
+                  @click.stop="openInNewTab(image)"
                 >
-                  复制代码
+                  新 tab 打开
                 </button>
                 <div class="image-info">
                   <div class="image-name">{{ image.name }}</div>
