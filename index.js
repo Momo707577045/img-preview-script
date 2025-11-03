@@ -22,15 +22,6 @@ new Vue({
         folderList: [],
         folderFilters: {}, // 存储文件夹的启用状态
         
-        // 智能识别相关
-        isRecognizing: false, // 是否正在识别
-        recognitionProgress: '识别中...', // 识别进度文本
-        recognitionProgressPercent: 0, // 识别进度百分比
-        recognitionResults: [], // 识别结果
-        hasRecognitionFilter: false, // 是否有识别过滤
-        hasSimilarityData: false, // 是否有相似度数据
-        opencvReady: false, // OpenCV是否加载完成
-        
         // 选中功能相关
         selectedImages: [], // 存储选中图片的路径
         
@@ -62,10 +53,6 @@ new Vue({
                     case 'path':
                         aValue = a.path || '';
                         bValue = b.path || '';
-                        break;
-                    case 'similarity':
-                        aValue = a.similarity || 0;
-                        bValue = b.similarity || 0;
                         break;
                     default:
                         return 0;
@@ -122,10 +109,6 @@ new Vue({
                             aValue = a.path || '';
                             bValue = b.path || '';
                             break;
-                        case 'similarity':
-                            aValue = a.similarity || 0;
-                            bValue = b.similarity || 0;
-                            break;
                         default:
                             return 0;
                     }
@@ -171,7 +154,6 @@ new Vue({
         await this.loadImages();
         this.bindKeyboardEvents();
         this.initMasonryLayout();
-        this.initOpenCV();
         this.initPasteFunction();
     },
     
@@ -417,28 +399,11 @@ new Vue({
         // 锁定图片（只锁定，不识别）
         lockImage(image) {
             this.lockedImage = image || this.currentImage;
-            // 清除之前的相似度数据
-            if (this.hasSimilarityData) {
-                this.clearRecognitionFilter();
-            }
             
             // 如果是粘贴的图片，显示特殊提示
             if (image && image.isPasted) {
                 this.showToast(`已锁定粘贴的图片: ${image.name}`);
             }
-        },
-        
-        // 锁定图片并开始识别
-        lockAndRecognize(image) {
-            this.lockedImage = image || this.currentImage;
-            // 清除之前的相似度数据
-            if (this.hasSimilarityData) {
-                this.clearRecognitionFilter();
-            }
-            // 启动智能识别
-            this.$nextTick(() => {
-                this.startSmartRecognition();
-            });
         },
         
         // 解锁图片
@@ -735,281 +700,6 @@ new Vue({
             });
         },
         
-        // 智能识别相关方法
-        
-        // 初始化OpenCV
-        initOpenCV() {
-            if (typeof cv !== 'undefined') {
-                this.opencvReady = true;
-            } else {
-                // 等待OpenCV加载
-                const checkOpenCV = () => {
-                    if (typeof cv !== 'undefined') {
-                        this.opencvReady = true;
-                    } else {
-                        setTimeout(checkOpenCV, 100);
-                    }
-                };
-                checkOpenCV();
-            }
-        },
-        
-
-        
-        // 开始智能识别
-        async startSmartRecognition() {
-            if (!this.opencvReady) {
-                alert('OpenCV 未就绪，请稍后重试');
-                return;
-            }
-            
-            if (!this.lockedImage) {
-                alert('请先锁定一张图片');
-                return;
-            }
-            
-            this.isRecognizing = true;
-            this.recognitionProgress = '初始化中...';
-            this.recognitionProgressPercent = 0;
-            
-            try {
-                // 使用整张图片进行匹配
-                console.log('使用整张图片进行匹配');
-                const referenceImage = await this.loadImageForOpenCV(this.lockedImage.url);
-                const referenceFeatures = this.extractFeatures(referenceImage);
-                referenceImage.delete();
-                
-                this.recognitionProgress = '正在分析图片...';
-                this.recognitionProgressPercent = 10;
-                
-                const results = [];
-                const totalImages = this.images.length;
-                
-                // 批量处理图片，避免阻塞UI
-                for (let i = 0; i < totalImages; i += 2) {
-                    const batch = this.images.slice(i, i + 2);
-                    const batchResults = await this.processBatch(batch, referenceFeatures);
-                    results.push(...batchResults);
-                    
-                    // 更新进度
-                    const progress = Math.round(((i + batch.length) / totalImages) * 100);
-                    const progressPercent = Math.round(10 + (progress * 0.8)); // 10-90%
-                    this.recognitionProgress = `正在识别图片 ${i + batch.length}/${totalImages}`;
-                    this.recognitionProgressPercent = progressPercent;
-                    
-                    // 让出主线程，避免阻塞
-                    await new Promise(resolve => setTimeout(resolve, 30));
-                }
-                
-                // 将相似度数据整合到图片对象中
-                this.integrateSimilarityData(results);
-                
-                // 自动按相似度降序排序
-                this.setSortDesc('similarity');
-                
-                // 清理参考特征的内存
-                this.cleanupFeatures(referenceFeatures);
-                
-            } catch (error) {
-                console.error('智能识别错误:', error);
-                alert('识别失败: ' + error.message);
-            } finally {
-                this.isRecognizing = false;
-                this.recognitionProgress = '识别中...';
-            }
-        },
-        
-                // 批量处理图片
-        async processBatch(batch, referenceFeatures) {
-            const results = [];
-            
-            for (const image of batch) {
-                try {
-                    // 使用整张图片比较
-                    const targetImage = await this.loadImageForOpenCV(image.url);
-                    const targetFeatures = this.extractFeatures(targetImage);
-                    const similarity = this.calculateSimilarity(referenceFeatures, targetFeatures);
-                    
-                    results.push({
-                        image: image,
-                        similarity: similarity
-                    });
-                    
-                    // 清理内存
-                    targetImage.delete();
-                    this.cleanupFeatures(targetFeatures);
-                } catch (error) {
-                    console.warn('处理图片失败:', image.path, error);
-                }
-            }
-            
-            return results;
-        },
-        
-        // 加载图片到OpenCV格式，支持区域选择
-        loadImageForOpenCV(imageSrc, cropRegion = null) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                
-                img.onload = () => {
-                    try {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        
-                        if (cropRegion) {
-                            // 如果有裁剪区域，保持原始尺寸用于模板匹配
-                            const { x, y, width, height } = cropRegion;
-                            canvas.width = width;
-                            canvas.height = height;
-                            
-                            // 绘制裁剪区域
-                            ctx.drawImage(img, x, y, width, height, 0, 0, width, height);
-                        } else {
-                            // 对于完整图片，适当缩放以提高性能
-                            const maxSize = 800;
-                            const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
-                            canvas.width = img.width * scale;
-                            canvas.height = img.height * scale;
-                            
-                            // 使用更好的缩放质量
-                            ctx.imageSmoothingEnabled = true;
-                            ctx.imageSmoothingQuality = 'high';
-                            
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        }
-                        
-                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                        const mat = cv.matFromImageData(imageData);
-                        
-                        resolve(mat);
-                    } catch (error) {
-                        reject(error);
-                    }
-                };
-                
-                img.onerror = () => {
-                    reject(new Error('图片加载失败'));
-                };
-                
-                img.src = imageSrc;
-            });
-        },
-        
-        // 提取图片特征 - 直接返回灰度图用于模板匹配
-        extractFeatures(mat) {
-            // 转换为灰度图
-            const gray = new cv.Mat();
-            cv.cvtColor(mat, gray, cv.COLOR_RGBA2GRAY);
-            
-            // 不进行尺寸调整，保持原始尺寸用于模板匹配
-            return gray;
-        },
-        
-        // 计算相似度 - 使用模板匹配
-        calculateSimilarity(template, targetImage) {
-            try {
-                // 确保模板小于目标图片
-                if (template.rows > targetImage.rows || template.cols > targetImage.cols) {
-                    // 如果模板比目标图片大，缩放模板
-                    const scale = Math.min(targetImage.rows / template.rows, targetImage.cols / template.cols) * 0.8;
-                    const newSize = new cv.Size(Math.floor(template.cols * scale), Math.floor(template.rows * scale));
-                    const resizedTemplate = new cv.Mat();
-                    cv.resize(template, resizedTemplate, newSize);
-                    
-                    const similarity = this.performTemplateMatching(resizedTemplate, targetImage);
-                    resizedTemplate.delete();
-                    return similarity;
-                } else {
-                    return this.performTemplateMatching(template, targetImage);
-                }
-            } catch (error) {
-                console.warn('模板匹配错误:', error);
-                return 0;
-            }
-        },
-        
-        // 执行模板匹配
-        performTemplateMatching(template, targetImage) {
-            try {
-                const result = new cv.Mat();
-                
-                // 使用归一化相关系数匹配方法
-                cv.matchTemplate(targetImage, template, result, cv.TM_CCOEFF_NORMED);
-                
-                // 找到最佳匹配位置
-                const minMaxLoc = cv.minMaxLoc(result);
-                const maxVal = minMaxLoc.maxVal;
-                
-                result.delete();
-                
-                // 返回匹配度（0-1之间）
-                return Math.max(0, Math.min(1, maxVal));
-            } catch (error) {
-                console.warn('模板匹配执行错误:', error);
-                return 0;
-            }
-        },
-        
-        // 清理特征对象内存
-        cleanupFeatures(features) {
-            if (features && features.delete) {
-                features.delete();
-            }
-        },
-        
-
-        
-        // 将相似度数据整合到图片对象中
-        integrateSimilarityData(results) {
-            // 创建相似度映射
-            const similarityMap = new Map();
-            results.forEach(result => {
-                similarityMap.set(result.image.path, result.similarity);
-            });
-            
-            // 将相似度数据添加到图片对象中
-            this.images.forEach(image => {
-                if (similarityMap.has(image.path)) {
-                    // 相似度已经是0-1之间的值，直接使用
-                    const similarity = similarityMap.get(image.path);
-                    this.$set(image, 'similarity', similarity);
-                } else {
-                    this.$set(image, 'similarity', 0);
-                }
-            });
-            
-            // 标记有相似度数据
-            this.hasSimilarityData = true;
-            this.recognitionResults = results;
-            
-            // 重新布局
-            this.$nextTick(() => {
-                this.layoutMasonry();
-            });
-        },
-        
-        // 清除识别过滤
-        clearRecognitionFilter() {
-            // 清除所有图片的相似度数据
-            this.images.forEach(image => {
-                this.$delete(image, 'similarity');
-            });
-            
-            this.recognitionResults = [];
-            this.hasRecognitionFilter = false;
-            this.hasSimilarityData = false;
-            
-            // 如果当前是相似度排序，切换到默认排序
-            if (this.sortBy === 'similarity') {
-                this.clearSort();
-            }
-            
-            // 重新布局
-            this.$nextTick(() => {
-                this.layoutMasonry();
-            });
-        },
 
         // 初始化粘贴功能
         initPasteFunction() {
@@ -1213,14 +903,6 @@ new Vue({
         // 关闭预览
         closePreview() {
             this.previewImage = null;
-        },
-
-        // 开始识别并设置预览图
-        startRecognitionWithPreview(image) {
-            // 设置预览图
-            this.previewImage = image;
-            // 开始智能识别
-            this.lockAndRecognize(image);
         }
     }
 });
