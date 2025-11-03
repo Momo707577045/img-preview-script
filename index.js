@@ -21,6 +21,7 @@ new Vue({
         showFolderFilterModal: false,
         folderList: [],
         folderFilters: {}, // 存储文件夹的启用状态
+        scanDir: '', // 当前扫描的目录（用于区分不同项目）
         
         // 选中功能相关
         selectedImages: [], // 存储选中图片的路径
@@ -257,6 +258,12 @@ new Vue({
                 
                 if (result.success) {
                     this.images = result.data;
+                    // 保存当前扫描目录
+                    if (result.dir) {
+                        this.scanDir = result.dir;
+                    } else if (result.scanDir) {
+                        this.scanDir = result.scanDir;
+                    }
                     // 初始化文件夹列表
                     this.initializeFolderList();
                     // 自动添加render-result目录中的图片到粘贴区域
@@ -799,10 +806,14 @@ new Vue({
                 return a.path.localeCompare(b.path);
             });
             
+            // 加载保存的文件夹过滤配置
+            const savedFilters = this.loadFolderFilters();
+            
             // 初始化过滤器状态 - 使用响应式对象
             const filters = {};
             this.folderList.forEach(folder => {
-                filters[folder.path] = true;
+                // 如果保存的配置中有该文件夹，使用保存的值；否则默认为 true
+                filters[folder.path] = savedFilters[folder.path] !== undefined ? savedFilters[folder.path] : true;
             });
             this.folderFilters = filters;
         },
@@ -849,12 +860,33 @@ new Vue({
             });
         },
         
+        // 切换文件夹启用状态
+        toggleFolder(folder) {
+            folder.enabled = !folder.enabled;
+            // 使用 Vue.set 确保响应式更新
+            this.$set(this.folderFilters, folder.path, folder.enabled);
+            
+            // 保存文件夹过滤配置
+            this.saveFolderFilters();
+            
+            // 强制重新渲染
+            this.$forceUpdate();
+            
+            // 重新布局
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
+        },
+        
         // 全选文件夹
         selectAllFolders() {
             this.folderList.forEach(folder => {
                 folder.enabled = true;
                 this.$set(this.folderFilters, folder.path, true);
             });
+            
+            // 保存文件夹过滤配置
+            this.saveFolderFilters();
             
             // 强制重新渲染
             this.$forceUpdate();
@@ -872,6 +904,9 @@ new Vue({
                 this.$set(this.folderFilters, folder.path, false);
             });
             
+            // 保存文件夹过滤配置
+            this.saveFolderFilters();
+            
             // 强制重新渲染
             this.$forceUpdate();
             
@@ -888,6 +923,9 @@ new Vue({
                 this.$set(this.folderFilters, folder.path, true);
             });
             
+            // 保存文件夹过滤配置
+            this.saveFolderFilters();
+            
             // 强制重新渲染
             this.$forceUpdate();
             
@@ -895,6 +933,39 @@ new Vue({
             this.$nextTick(() => {
                 this.layoutMasonry();
             });
+        },
+        
+        // 获取 localStorage key（基于扫描目录）
+        getFolderFiltersKey() {
+            if (!this.scanDir) {
+                return 'folderFilters_default';
+            }
+            // 使用目录路径的 hash 或者直接使用路径（处理特殊字符）
+            return 'folderFilters_' + encodeURIComponent(this.scanDir).replace(/[^a-zA-Z0-9]/g, '_');
+        },
+        
+        // 保存文件夹过滤配置到 localStorage
+        saveFolderFilters() {
+            try {
+                const key = this.getFolderFiltersKey();
+                localStorage.setItem(key, JSON.stringify(this.folderFilters));
+            } catch (error) {
+                console.error('保存文件夹过滤配置失败:', error);
+            }
+        },
+        
+        // 从 localStorage 加载文件夹过滤配置
+        loadFolderFilters() {
+            try {
+                const key = this.getFolderFiltersKey();
+                const saved = localStorage.getItem(key);
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+            } catch (error) {
+                console.error('加载文件夹过滤配置失败:', error);
+            }
+            return {};
         },
         
 

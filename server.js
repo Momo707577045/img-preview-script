@@ -147,6 +147,7 @@ app.get('/api/images', async (req, res) => {
     
     res.json({
       success: true,
+      dir: SCAN_DIR,
       data: imagesWithDimensions,
       total: imagesWithDimensions.length
     });
@@ -189,55 +190,6 @@ app.get('/images/*', (req, res) => {
     res.sendFile(fullPath);
   } catch (error) {
     res.status(500).json({ error: error.message });
-  }
-});
-
-// 获取图片详细信息的API
-app.get('/api/image-info/:path(*)', async (req, res) => {
-  try {
-    const imagePath = decodeURIComponent(req.params.path);
-    const fullPath = path.join(SCAN_DIR, imagePath);
-    
-    if (!fullPath.startsWith(SCAN_DIR)) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-    
-    if (!fs.existsSync(fullPath)) {
-      return res.status(404).json({ error: 'Image not found' });
-    }
-    
-    const stats = fs.statSync(fullPath);
-    const ext = path.extname(fullPath).toLowerCase();
-    
-    let imageInfo = {
-      name: path.basename(fullPath),
-      path: imagePath,
-      size: stats.size,
-      modified: stats.mtime,
-      extension: ext
-    };
-    
-    // 如果不是SVG，尝试获取图片尺寸
-    if (ext !== '.svg') {
-      try {
-        const metadata = await sharp(fullPath).metadata();
-        imageInfo.width = metadata.width;
-        imageInfo.height = metadata.height;
-        imageInfo.format = metadata.format;
-      } catch (err) {
-        console.warn('Could not get image metadata:', err.message);
-      }
-    }
-    
-    res.json({
-      success: true,
-      data: imageInfo
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
   }
 });
 
