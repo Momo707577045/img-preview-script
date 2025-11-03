@@ -623,6 +623,127 @@
         max-height: 100vh;
       }
 
+      /* 代码模板配置区域样式 */
+      .template-section {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 20px;
+      }
+
+      .template-header {
+        margin-bottom: 15px;
+      }
+
+      .template-header h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+      }
+
+      .template-config {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .template-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+
+      .template-help {
+        cursor: help;
+        font-size: 14px;
+      }
+
+      .template-presets {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .template-editor,
+      .template-preview {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .template-select {
+        padding: 8px 12px;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        font-size: 13px;
+        outline: none;
+        transition: all 0.2s;
+        background: white;
+        flex: 1;
+      }
+
+      .reset-preset-btn {
+        padding: 8px 16px;
+        border: 1px solid #dc3545;
+        border-radius: 4px;
+        font-size: 13px;
+        outline: none;
+        transition: all 0.2s;
+        background: white;
+        color: #dc3545;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .reset-preset-btn:hover {
+        background: #dc3545;
+        color: white;
+      }
+
+      .reset-preset-btn:active {
+        transform: scale(0.98);
+      }
+
+      .template-select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+      }
+
+      .template-textarea {
+        padding: 10px;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        font-size: 13px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        outline: none;
+        transition: all 0.2s;
+        resize: vertical;
+        line-height: 1.5;
+      }
+
+      .template-textarea:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+      }
+
+      .template-preview-code {
+        padding: 10px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        font-size: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        color: #495057;
+        word-break: break-all;
+        white-space: pre-wrap;
+      }
+
       /* 粘贴功能区域样式 */
       .paste-section {
         background: white;
@@ -1162,6 +1283,57 @@
 
         <!-- 右侧内容区域 -->
         <div class="right-panel">
+          <!-- 代码模板配置区域 -->
+          <div class="template-section">
+            <div class="template-header">
+              <h3>代码生成模板</h3>
+            </div>
+            
+            <div class="template-config">
+              <div class="template-presets">
+                <label class="template-label">预设模板：</label>
+                <select 
+                  class="template-select"
+                  v-model="selectedPreset"
+                  @change="applyPreset"
+                >
+                  <option value="custom">自定义模板</option>
+                  <option value="import">Import 导入</option>
+                  <option value="require">Require 导入</option>
+                  <option value="img">HTML img 标签</option>
+                  <option value="markdown">Markdown 图片</option>
+                  <option value="css-url">CSS url()</option>
+                  <option value="path-only">仅路径</option>
+                </select>
+                <button 
+                  class="reset-preset-btn"
+                  @click="resetPresetTemplates"
+                  title="重置所有预设模板（自定义模板除外）"
+                >
+                  重置
+                </button>
+              </div>
+              
+              <div class="template-editor">
+                <label class="template-label">
+                  代码模板：
+                  <span class="template-help" title="可用变量：&#10;{path} - 文件路径&#10;{name} - 文件名(无扩展名)&#10;{fullname} - 完整文件名&#10;{width} - 图片宽度&#10;{height} - 图片高度&#10;{size} - 文件大小&#10;{ext} - 文件扩展名">ℹ️</span>
+                </label>
+                <textarea 
+                  class="template-textarea"
+                  v-model="codeTemplate"
+                  placeholder="输入代码模板，使用 {path} {name} {fullname} {width} {height} {size} {ext} 作为变量"
+                  rows="3"
+                ></textarea>
+              </div>
+              
+              <div class="template-preview" v-if="currentImage">
+                <label class="template-label">预览效果：</label>
+                <div class="template-preview-code">{{ generatePreviewCode() }}</div>
+              </div>
+            </div>
+          </div>
+          
           <!-- 粘贴功能区域 -->
           <div 
             class="paste-section"

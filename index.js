@@ -33,6 +33,28 @@ new Vue({
         
         // 搜索功能相关
         searchKeyword: '', // 搜索关键词
+        
+        // 代码模板相关
+        selectedPreset: '', // 选中的预设模板
+        codeTemplate: '', // 代码模板
+        isInitializingTemplate: false, // 标志：是否正在初始化模板（避免初始化时触发保存）
+        templatePresets: {
+            'import': "import {name} from './{path}';",
+            'require': "const {name} = require('./{path}');",
+            'img': '<img src="{path}" alt="{name}" width="{width}" height="{height}" />',
+            'markdown': '![{name}]({path})',
+            'css-url': "background-image: url('{path}');",
+            'path-only': '{path}'
+        },
+        // 保存默认的预设模板值（用于重置）
+        defaultTemplatePresets: {
+            'import': "import {name} from './{path}';",
+            'require': "const {name} = require('./{path}');",
+            'img': '<img src="{path}" alt="{name}" width="{width}" height="{height}" />',
+            'markdown': '![{name}]({path})',
+            'css-url': "background-image: url('{path}');",
+            'path-only': '{path}'
+        },
     },
     
     computed: {
@@ -176,10 +198,42 @@ new Vue({
             this.$nextTick(() => {
                 this.layoutMasonry();
             });
+        },
+        
+        // 监听代码模板变化
+        codeTemplate(newVal) {
+            // 如果用户手动修改了模板，检查是否与预设模板一致
+            let matchedPreset = '';
+            for (const [key, value] of Object.entries(this.templatePresets)) {
+                if (value === newVal) {
+                    matchedPreset = key;
+                    break;
+                }
+            }
+            // 如果不匹配任何预设，设为自定义
+            if (matchedPreset !== this.selectedPreset) {
+                this.selectedPreset = matchedPreset || '';
+            }
+            
+            // 如果不是初始化阶段，保存到 localStorage
+            if (!this.isInitializingTemplate) {
+                this.saveTemplateToStorage();
+            }
+        },
+        
+        // 监听预设模板变化
+        selectedPreset() {
+            // 如果不是初始化阶段，保存到 localStorage
+            if (!this.isInitializingTemplate) {
+                this.saveTemplateToStorage();
+            }
         }
     },
     
     async mounted() {
+        // 从 localStorage 恢复代码模板设置
+        this.loadTemplateFromStorage();
+        
         await this.loadImages();
         this.bindKeyboardEvents();
         this.initMasonryLayout();
@@ -349,12 +403,111 @@ new Vue({
                 // 对于粘贴的图片，生成base64代码
                 code = `<TaImgBox :image="pastedImages['${image.name}']" class="absolute top-100px left-40px" />`;
             } else {
-                // 对于普通图片，使用原有的代码格式
-                const imageName = this.getImageVariableName(image.name);
-                code = `<TaImgBox :image="images['${imageName}']" class="absolute top-100px left-40px" />`;
+                // 使用自定义模板生成代码
+                code = this.generateCodeFromTemplate(image);
             }
             
             this.copyText(code);
+        },
+        
+        // 根据模板生成代码
+        generateCodeFromTemplate(image) {
+            if (!image) return '';
+            
+            // 获取文件扩展名（不含点）
+            const ext = image.name.split('.').pop() || '';
+            // 获取不含扩展名的文件名
+            const nameWithoutExt = image.name.replace(/\.[^/.]+$/, '');
+            
+            // 替换模板变量
+            let code = this.codeTemplate || '{path}';
+            code = code.replace(/\{path\}/g, image.path || '');
+            code = code.replace(/\{name\}/g, nameWithoutExt || '');
+            code = code.replace(/\{fullname\}/g, image.name || '');
+            code = code.replace(/\{width\}/g, image.width || '');
+            code = code.replace(/\{height\}/g, image.height || '');
+            code = code.replace(/\{size\}/g, this.formatFileSize(image.size) || '');
+            code = code.replace(/\{ext\}/g, ext || '');
+            
+            return code;
+        },
+        
+        // 应用预设模板
+        applyPreset() {
+            if (this.selectedPreset && this.templatePresets[this.selectedPreset]) {
+                this.codeTemplate = this.templatePresets[this.selectedPreset];
+            }
+            // 如果选择的是自定义模板（空值），不改变 codeTemplate
+            // watch 中的 codeTemplate 会触发保存
+        },
+        
+        // 从 localStorage 加载模板设置
+        loadTemplateFromStorage() {
+            this.isInitializingTemplate = true; // 标记为初始化阶段
+            
+            try {
+                const savedPreset = localStorage.getItem('codeTemplateSelectedPreset');
+                const savedTemplate = localStorage.getItem('codeTemplateContent');
+                
+                // 恢复预设模板
+                if (savedPreset !== null) {
+                    this.selectedPreset = savedPreset;
+                } else {
+                    // 如果没有保存的值，使用默认值
+                    this.selectedPreset = 'import';
+                }
+                
+                // 恢复代码模板
+                if (savedTemplate !== null) {
+                    this.codeTemplate = savedTemplate;
+                } else {
+                    // 如果没有保存的值，使用默认值
+                    this.codeTemplate = this.templatePresets[this.selectedPreset] || "import {name} from './{path}';";
+                }
+            } catch (error) {
+                console.error('加载模板设置失败:', error);
+                // 加载失败时使用默认值
+                this.selectedPreset = 'import';
+                this.codeTemplate = this.templatePresets['import'] || "import {name} from './{path}';";
+            } finally {
+                // 使用 $nextTick 确保所有 watch 都已执行完毕后再取消标志
+                this.$nextTick(() => {
+                    this.isInitializingTemplate = false;
+                });
+            }
+        },
+        
+        // 保存模板设置到 localStorage
+        saveTemplateToStorage() {
+            try {
+                localStorage.setItem('codeTemplateSelectedPreset', this.selectedPreset || '');
+                localStorage.setItem('codeTemplateContent', this.codeTemplate || '');
+            } catch (error) {
+                console.error('保存模板设置失败:', error);
+            }
+        },
+        
+        // 重置预设模板（除了自定义模板）
+        resetPresetTemplates() {
+            if (confirm('确定要重置所有预设模板吗？自定义模板不会被重置。')) {
+                // 重置所有预设模板到默认值
+                Object.keys(this.defaultTemplatePresets).forEach(key => {
+                    this.templatePresets[key] = this.defaultTemplatePresets[key];
+                });
+                
+                // 如果当前选中的是预设模板，也更新当前模板内容
+                if (this.selectedPreset && this.templatePresets[this.selectedPreset]) {
+                    this.codeTemplate = this.templatePresets[this.selectedPreset];
+                }
+                
+                this.showToast('预设模板已重置');
+            }
+        },
+        
+        // 生成预览代码
+        generatePreviewCode() {
+            if (!this.currentImage) return '请先选择一张图片';
+            return this.generateCodeFromTemplate(this.currentImage);
         },
 
         async copyText(text) {
