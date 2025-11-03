@@ -1159,6 +1159,26 @@
                 </button>
               </div>
 
+              <!-- 体积排序 -->
+              <div class="sort-group">
+                <button
+                  class="sort-btn asc"
+                  :class="{ active: sortBy === 'size' && sortOrder === 'asc' }"
+                  @click="setSortAsc('size')"
+                  title="体积升序"
+                >
+                  体积↑
+                </button>
+                <button
+                  class="sort-btn desc"
+                  :class="{ active: sortBy === 'size' && sortOrder === 'desc' }"
+                  @click="setSortDesc('size')"
+                  title="体积降序"
+                >
+                  体积↓
+                </button>
+              </div>
+
               <!-- 清除排序 -->
               <button
                 class="sort-btn clear"

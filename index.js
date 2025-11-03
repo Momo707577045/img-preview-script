@@ -81,6 +81,10 @@ new Vue({
                         aValue = a.path || '';
                         bValue = b.path || '';
                         break;
+                    case 'size':
+                        aValue = a.size || 0;
+                        bValue = b.size || 0;
+                        break;
                     default:
                         return 0;
                 }
@@ -145,6 +149,10 @@ new Vue({
                         case 'path':
                             aValue = a.path || '';
                             bValue = b.path || '';
+                            break;
+                        case 'size':
+                            aValue = a.size || 0;
+                            bValue = b.size || 0;
                             break;
                         default:
                             return 0;
