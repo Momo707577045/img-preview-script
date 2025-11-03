@@ -473,27 +473,17 @@ new Vue({
             }
         },
         
-        // 重置预设模板（除了自定义模板）
+        // 重置预设模板
         resetPresetTemplates() {
-            if (confirm('确定要重置所有预设模板吗？自定义模板不会被重置。')) {
-                // 重置所有预设模板到默认值
-                Object.keys(this.defaultTemplatePresets).forEach(key => {
-                    this.templatePresets[key] = this.defaultTemplatePresets[key];
-                });
-                
-                // 如果当前选中的是预设模板，也更新当前模板内容
-                if (this.selectedPreset && this.templatePresets[this.selectedPreset]) {
-                    this.codeTemplate = this.templatePresets[this.selectedPreset];
-                }
-                
-                this.showToast('预设模板已重置');
+            if (confirm('确定要重置当前预设模板吗？')) {
+                this.codeTemplate = this.templatePresets[this.selectedPreset] = this.defaultTemplatePresets[this.selectedPreset];
+                this.showToast('已重置');
             }
         },
         
         // 生成预览代码
         generatePreviewCode() {
-            if (!this.currentImage) return '请先选择一张图片';
-            return this.generateCodeFromTemplate(this.currentImage);
+            return this.generateCodeFromTemplate(this.images?.length > 0 ? this.images[0] : null);
         },
 
         async copyText(text) {

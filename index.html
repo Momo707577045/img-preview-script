@@ -1308,7 +1308,6 @@
                 <button 
                   class="reset-preset-btn"
                   @click="resetPresetTemplates"
-                  title="重置所有预设模板（自定义模板除外）"
                 >
                   重置
                 </button>
@@ -1327,7 +1326,7 @@
                 ></textarea>
               </div>
               
-              <div class="template-preview" v-if="currentImage">
+              <div class="template-preview">
                 <label class="template-label">预览效果：</label>
                 <div class="template-preview-code">{{ generatePreviewCode() }}</div>
               </div>
