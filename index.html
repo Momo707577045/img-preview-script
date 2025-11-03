@@ -48,7 +48,6 @@
       .panel-title {
         font-size: 18px;
         font-weight: 600;
-        margin-bottom: 15px;
         color: #333;
         display: flex;
         align-items: center;
@@ -439,15 +438,13 @@
       /* 选中图片的样式 */
       .image-item.selected {
         border-color: #dc3545;
-        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0.3), 0 4px 12px rgba(220, 53, 69, 0.2);
+        box-shadow: 0 0 0 5px rgba(220, 53, 69, 0.3), 0 2px 6px rgba(220, 53, 69, 0.2);
         background: linear-gradient(135deg, #fff8f8 0%, #ffe8e8 100%);
       }
 
       .image-item.selected:hover {
-        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0.4), 0 6px 16px rgba(220, 53, 69, 0.3);
+        box-shadow: 0 0 0 5px rgba(220, 53, 69, 0.4), 0 2px 6px rgba(220, 53, 69, 0.3);
       }
-
-
 
       .image-thumbnail {
         width: 100%;
@@ -509,35 +506,23 @@
 
       .selection-toggle-btn {
         position: absolute;
-        top: 4px;
-        right: 4px;
-        background: rgba(40, 167, 69, 0.9);
-        color: white;
+        top: 0px;
+        right: 0px;
+        background: white;
+        color: black;
         border: none;
-        padding: 4px 8px;
+        padding: 2px 4px;
         border-radius: 4px;
         cursor: pointer;
-        font-size: 11px;
+        font-size: 16px;
         transition: all 0.2s;
         z-index: 10;
-        height: 28px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
         white-space: nowrap;
-        min-width: 40px;
-      }
-
-      .selection-toggle-btn:hover {
-        background: rgba(33, 136, 56, 0.9);
-      }
-
-      .image-item.selected .selection-toggle-btn {
-        background: rgba(220, 53, 69, 0.9);
-      }
-
-      .image-item.selected .selection-toggle-btn:hover {
-        background: rgba(200, 35, 51, 0.9);
+        min-width: 32px;
       }
 
       .copy-code-btn {
@@ -923,7 +908,7 @@
                 title="取消所有选择"
                 v-if="hasSelectedImages"
               >
-                ✗ 取消选择
+                取消选择
               </button>
 
             </h2>
@@ -1055,7 +1040,7 @@
                   @click.stop="toggleImageSelection(image)"
                   :title="isImageSelected(image) ? '取消选中' : '选中'"
                 >
-                  {{ isImageSelected(image) ? '取消' : '选中' }}
+                  {{ isImageSelected(image) ? '📍' : '📌' }}
                 </button>
                 <button
                   class="copy-code-btn"
