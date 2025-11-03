@@ -35,10 +35,11 @@ new Vue({
         searchKeyword: '', // 搜索关键词
         
         // 代码模板相关
-        selectedPreset: '', // 选中的预设模板
+        selectedPreset: 'custom', // 选中的预设模板
         codeTemplate: '', // 代码模板
         isInitializingTemplate: false, // 标志：是否正在初始化模板（避免初始化时触发保存）
         templatePresets: {
+            'custom': '<TaImgBox :image="images[\'{name}\']" class="absolute top-100px left-40px" />',
             'import': "import {name} from './{path}';",
             'require': "const {name} = require('./{path}');",
             'img': '<img src="{path}" alt="{name}" width="{width}" height="{height}" />',
@@ -48,6 +49,7 @@ new Vue({
         },
         // 保存默认的预设模板值（用于重置）
         defaultTemplatePresets: {
+            'custom': '<TaImgBox :image="images[\'{name}\']" class="absolute top-100px left-40px" />',
             'import': "import {name} from './{path}';",
             'require': "const {name} = require('./{path}');",
             'img': '<img src="{path}" alt="{name}" width="{width}" height="{height}" />',
@@ -202,19 +204,7 @@ new Vue({
         
         // 监听代码模板变化
         codeTemplate(newVal) {
-            // 如果用户手动修改了模板，检查是否与预设模板一致
-            let matchedPreset = '';
-            for (const [key, value] of Object.entries(this.templatePresets)) {
-                if (value === newVal) {
-                    matchedPreset = key;
-                    break;
-                }
-            }
-            // 如果不匹配任何预设，设为自定义
-            if (matchedPreset !== this.selectedPreset) {
-                this.selectedPreset = matchedPreset || '';
-            }
-            
+            this.templatePresets[this.selectedPreset] = newVal;
             // 如果不是初始化阶段，保存到 localStorage
             if (!this.isInitializingTemplate) {
                 this.saveTemplateToStorage();
@@ -434,11 +424,7 @@ new Vue({
         
         // 应用预设模板
         applyPreset() {
-            if (this.selectedPreset && this.templatePresets[this.selectedPreset]) {
-                this.codeTemplate = this.templatePresets[this.selectedPreset];
-            }
-            // 如果选择的是自定义模板（空值），不改变 codeTemplate
-            // watch 中的 codeTemplate 会触发保存
+            this.codeTemplate = this.templatePresets[this.selectedPreset];
         },
         
         // 从 localStorage 加载模板设置
