@@ -106,8 +106,9 @@
         background: rgba(0, 0, 0, 0.5);
         z-index: 1000;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
+        padding-top: 20px;
       }
 
       .folder-filter-content {
@@ -115,10 +116,11 @@
         border-radius: 8px;
         padding: 20px;
         max-width: 600px;
-        max-height: 70vh;
-        overflow-y: auto;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         width: 90%;
+        max-height: calc(100vh - 40px);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
       }
 
       .folder-filter-header {
@@ -128,6 +130,7 @@
         margin-bottom: 20px;
         padding-bottom: 15px;
         border-bottom: 1px solid #e0e0e0;
+        flex-shrink: 0;
       }
 
       .folder-filter-title {
@@ -161,6 +164,7 @@
         display: flex;
         gap: 10px;
         margin-bottom: 20px;
+        flex-shrink: 0;
       }
 
       .folder-action-btn {
@@ -205,6 +209,9 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
       }
 
       .folder-item {
@@ -216,6 +223,7 @@
         cursor: pointer;
         transition: all 0.2s;
         background: white;
+        position: relative;
       }
 
       .folder-item:hover {
@@ -238,6 +246,61 @@
         width: 16px;
         height: 16px;
         cursor: pointer;
+      }
+
+      /* 文件夹操作按钮样式 */
+      .folder-actions {
+        display: flex;
+        gap: 6px;
+        margin-left: auto;
+        align-items: center;
+      }
+
+      .folder-disable-btn {
+        border: none;
+        padding: 4px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+        transition: all 0.2s;
+        white-space: nowrap;
+        font-weight: 500;
+      }
+
+      .folder-disable-only-btn {
+        background: #ffc107;
+        color: #333;
+      }
+
+      .folder-disable-only-btn:hover {
+        background: #e0a800;
+      }
+
+      .folder-disable-all-btn {
+        background: #dc3545;
+        color: white;
+      }
+
+      .folder-disable-all-btn:hover {
+        background: #c82333;
+      }
+
+      .folder-enable-btn {
+        background: #28a745;
+        color: white;
+      }
+
+      .folder-enable-btn:hover {
+        background: #218838;
+      }
+
+      .folder-enable-only-btn {
+        background: #17a2b8;
+        color: white;
+      }
+
+      .folder-enable-only-btn:hover {
+        background: #138496;
       }
 
       .folder-info {
@@ -1285,6 +1348,7 @@
         class="folder-filter-modal"
         v-if="showFolderFilterModal"
         @click="hideFolderFilter"
+        @contextmenu.prevent="hideContextMenu"
       >
         <div class="folder-filter-content" @click.stop>
           <div class="folder-filter-header">
@@ -1318,7 +1382,6 @@
               :key="folder.path"
               class="folder-item"
               :class="{ disabled: !folder.enabled }"
-              @click="toggleFolder(folder)"
             >
               <input
                 type="checkbox"
@@ -1330,6 +1393,38 @@
               <div class="folder-info">
                 <div class="folder-path">{{ folder.path || '根目录' }}</div>
                 <div class="folder-count">{{ folder.count }} 张图片</div>
+              </div>
+              <div class="folder-actions" v-if="folder.enabled">
+                <button
+                  class="folder-disable-btn folder-disable-only-btn"
+                  @click.stop="disableFolderOnly(folder)"
+                  title="仅屏蔽此文件夹（保留子文件夹）"
+                >
+                  仅屏蔽
+                </button>
+                <button
+                  class="folder-disable-btn folder-disable-all-btn"
+                  @click.stop="disableFolderWithChildren(folder)"
+                  title="屏蔽此文件夹及其所有子文件夹"
+                >
+                  屏蔽全部
+                </button>
+              </div>
+              <div class="folder-actions" v-else>
+                <button
+                  class="folder-disable-btn folder-enable-only-btn"
+                  @click.stop="enableFolderOnly(folder)"
+                  title="仅启用此文件夹（保留子文件夹状态）"
+                >
+                  仅启用
+                </button>
+                <button
+                  class="folder-disable-btn folder-enable-btn"
+                  @click.stop="enableFolderWithChildren(folder)"
+                  title="启用此文件夹及其所有子文件夹"
+                >
+                  启用全部
+                </button>
               </div>
             </div>
           </div>

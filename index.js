@@ -946,34 +946,114 @@ return \`<InfraBaseImgBox :image="images['\${key}']" />\`;`,
             this.showFolderFilterModal = false;
         },
         
-        // 切换文件夹启用状态
-        toggleFolder(folder) {
-            folder.enabled = !folder.enabled;
-            // 使用 Vue.set 确保响应式更新
-            this.$set(this.folderFilters, folder.path, folder.enabled);
+        // 切换文件夹启用状态（默认行为：仅切换当前文件夹）
+        toggleFolder(folder, includeChildren = false) {
+            if (includeChildren) {
+                // 屏蔽父文件夹及其所有子文件夹
+                this.disableFolderWithChildren(folder);
+            } else {
+                // 仅屏蔽当前文件夹
+                folder.enabled = !folder.enabled;
+                this.$set(this.folderFilters, folder.path, folder.enabled);
+                this.saveFolderFilters();
+                this.$forceUpdate();
+                this.$nextTick(() => {
+                    this.layoutMasonry();
+                });
+            }
+        },
+        
+        // 获取指定文件夹的所有子文件夹
+        getChildFolders(parentPath) {
+            if (!parentPath) {
+                // 如果是根目录，返回所有非根目录的文件夹
+                return this.folderList.filter(folder => folder.path !== '');
+            }
             
-            // 强制重新渲染
+            // 统一使用正斜杠进行比较（处理 Windows 和 Unix 路径）
+            const normalizedParentPath = parentPath.replace(/\\/g, '/');
+            
+            return this.folderList.filter(folder => {
+                // 排除父文件夹本身
+                if (folder.path === parentPath) {
+                    return false;
+                }
+                
+                // 统一子文件夹路径格式
+                const normalizedFolderPath = folder.path.replace(/\\/g, '/');
+                
+                // 检查是否是子文件夹（路径以父路径开头，且下一个字符是分隔符）
+                return normalizedFolderPath.startsWith(normalizedParentPath + '/');
+            });
+        },
+        
+        // 仅屏蔽父文件夹（保留子文件夹）
+        disableFolderOnly(folder) {
+            folder.enabled = false;
+            this.$set(this.folderFilters, folder.path, false);
+            
+            // 确保所有子文件夹保持启用状态
+            const childFolders = this.getChildFolders(folder.path);
+            childFolders.forEach(childFolder => {
+                childFolder.enabled = true;
+                this.$set(this.folderFilters, childFolder.path, true);
+            });
+            
+            this.saveFolderFilters();
             this.$forceUpdate();
-            
-            // 重新布局
             this.$nextTick(() => {
                 this.layoutMasonry();
             });
         },
         
-        // 切换文件夹启用状态
-        toggleFolder(folder) {
-            folder.enabled = !folder.enabled;
-            // 使用 Vue.set 确保响应式更新
-            this.$set(this.folderFilters, folder.path, folder.enabled);
+        // 屏蔽父文件夹及其所有子文件夹
+        disableFolderWithChildren(folder) {
+            folder.enabled = false;
+            this.$set(this.folderFilters, folder.path, false);
             
-            // 保存文件夹过滤配置
+            // 屏蔽所有子文件夹
+            const childFolders = this.getChildFolders(folder.path);
+            childFolders.forEach(childFolder => {
+                childFolder.enabled = false;
+                this.$set(this.folderFilters, childFolder.path, false);
+            });
+            
             this.saveFolderFilters();
-            
-            // 强制重新渲染
             this.$forceUpdate();
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
+        },
+        
+        // 仅启用父文件夹（保留子文件夹的当前状态）
+        enableFolderOnly(folder) {
+            folder.enabled = true;
+            this.$set(this.folderFilters, folder.path, true);
             
-            // 重新布局
+            // 不改变子文件夹的状态，保持它们当前的状态
+            // 子文件夹的状态由 folderFilters 中的值决定
+            
+            this.saveFolderFilters();
+            this.$forceUpdate();
+            this.$nextTick(() => {
+                this.layoutMasonry();
+            });
+        },
+        
+        // 启用文件夹及其所有子文件夹
+        enableFolderWithChildren(folder) {
+            folder.enabled = true;
+            this.$set(this.folderFilters, folder.path, true);
+            
+            // 启用所有子文件夹
+            const childFolders = this.getChildFolders(folder.path);
+            childFolders.forEach(childFolder => {
+                childFolder.enabled = true;
+                this.$set(this.folderFilters, childFolder.path, true);
+            });
+            
+            this.saveFolderFilters();
+            this.$forceUpdate();
             this.$nextTick(() => {
                 this.layoutMasonry();
             });
