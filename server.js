@@ -517,6 +517,15 @@ server.listen(PORT, () => {
   
   // 自动打开浏览器
   setTimeout(() => {
-    openBrowser(serverUrl);
+    // 检查同级文件夹是否有 index.html
+    const indexPath = path.join(SCRIPT_DIR, 'index.html');
+    if (!fs.existsSync(indexPath)) {
+      // 如果没有 index.html，打开远程 URL
+      const remoteUrl = `https://blog.luckly-mjw.cn/tool-show/img-preview-script/index.html?port=${PORT}`;
+      openBrowser(remoteUrl);
+    } else {
+      // 如果有 index.html，打开本地 URL
+      openBrowser(serverUrl);
+    }
   }, 500); // 延迟500ms确保服务器完全启动
 });

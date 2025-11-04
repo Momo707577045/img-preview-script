@@ -254,14 +254,17 @@ new Vue({
                 this.error = null;
                 
                 // 从 URL 获取端口并构建 API URL
-                new urlObj = new URL(window.location.href);
+                const urlObj = new URL(window.location.href);
                 const port = urlObj.searchParams.get('port');
                 const apiUrl = `http://localhost:${port}/api/images`;
                 const response = await fetch(apiUrl);
                 const result = await response.json();
                 
                 if (result.success) {
-                    this.images = result.data;
+                    this.images = result.data?.map(image => ({
+                        ...image,
+                        url: `http://localhost:${port}${image.url}`,
+                    })) || [];
                     // 保存当前扫描目录
                     if (result.dir) {
                         this.scanDir = result.dir;
