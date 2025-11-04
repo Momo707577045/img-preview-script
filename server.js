@@ -519,18 +519,13 @@ server.listen(PORT, () => {
   
   // 自动打开浏览器
   setTimeout(() => {
-    let url = '';
+    let url = `http://localhost:${PORT}?port=${PORT}`;;
     // 检查同级文件夹是否有 index.html
     const indexPath = path.join(SCRIPT_DIR, 'index.html');
     if (!fs.existsSync(indexPath)) {
-      // 如果没有 index.html，打开远程 URL
       url = `https://blog.luckly-mjw.cn/tool-show/img-preview-script/index.html?port=${PORT}`;
-      openBrowser(remoteUrl);
-    } else {
-      // 如果有 index.html，打开本地 URL
-      url = `http://localhost:${PORT}?port=${PORT}`;
-      openBrowser(url);
-    }
+    } 
+    openBrowser(url);
     console.log(`图片预览服务器运行在 ${url}`);
     console.log(`正在扫描目录: ${SCAN_DIR}`);
     console.log(`使用端口: ${PORT}`);
