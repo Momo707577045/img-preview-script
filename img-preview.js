@@ -16,7 +16,7 @@ function showHelp() {
 
 选项:
   -p, --port <端口>    指定服务器端口 (默认: 20000-25000 之间的随机端口)
-  -d, --dir <目录>     指定要扫描的图片目录 (默认: 脚本所在目录)
+  -d, --dir <目录>     指定要扫描的图片目录 (默认: 当前工作目录)
   -h, --help           显示此帮助信息
 
 示例:
@@ -32,7 +32,7 @@ function showHelp() {
 说明:
   - 服务器启动后会自动打开浏览器访问预览页面
   - 如果未指定端口，将使用 20000-25000 之间的随机端口
-  - 如果未指定目录，将扫描脚本所在目录及其子目录
+  - 如果未指定目录，将扫描执行脚本时的工作目录及其子目录
   - 服务器会自动跳过 node_modules 和以 . 开头的目录
 `;
   console.log(helpText);
@@ -514,9 +514,9 @@ function startServer(options = {}) {
   // 确定端口
   const PORT = port || getRandomPort();
 
-  // 确定扫描目录（默认是脚本所在目录）
+  // 确定扫描目录（默认是执行脚本时的工作目录）
   const SCRIPT_DIR = scriptDir;
-  let SCAN_DIR = dir ? path.resolve(dir) : SCRIPT_DIR;
+  let SCAN_DIR = dir ? path.resolve(dir) : process.cwd();
 
   // 验证扫描目录是否存在
   if (!fs.existsSync(SCAN_DIR)) {
