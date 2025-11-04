@@ -604,7 +604,7 @@ return \`<InfraBaseImgBox :image="images['\${key}']" />\`;`,
         
         // 生成预览代码
         generatePreviewCode() {
-            const previewImage = this.filteredImages?.length > 0 ? this.filteredImages[this.currentImageIndex] : null;
+            const previewImage = this.filteredImages?.length > 0 ? this.filteredImages[Math.max(0, this.currentImageIndex)] : null;
             if (!previewImage) return '';
             if (this.useJsCode) {
                 return this.generateCodeFromJs(previewImage);
