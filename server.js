@@ -427,10 +427,10 @@ function handleStaticFile(req, res, filePath) {
     
     const stat = fs.statSync(fullPath);
     if (stat.isDirectory()) {
-      // 如果是目录，尝试查找 index.html
-      const indexPath = path.join(fullPath, 'index.html');
+      // 如果是目录，尝试查找 img-preview.html
+      const indexPath = path.join(fullPath, 'img-preview.html');
       if (fs.existsSync(indexPath)) {
-        handleStaticFile(req, res, path.join(filePath, 'index.html'));
+        handleStaticFile(req, res, path.join(filePath, 'img-preview.html'));
       } else {
         sendError(res, 'File not found', 404);
       }
@@ -507,8 +507,8 @@ const server = http.createServer(async (req, res) => {
     handleImage(req, res, imagePath);
   } else {
     // 静态文件服务
-    // 如果路径是 /，则返回 index.html
-    const filePath = pathname === '/' ? '/index.html' : pathname;
+    // 如果路径是 /，则返回 img-preview.html
+    const filePath = pathname === '/' ? '/img-preview.html' : pathname;
     handleStaticFile(req, res, filePath);
   }
 });
@@ -520,10 +520,10 @@ server.listen(PORT, () => {
   // 自动打开浏览器
   setTimeout(() => {
     let url = `http://localhost:${PORT}?port=${PORT}`;;
-    // 检查同级文件夹是否有 index.html
-    const indexPath = path.join(SCRIPT_DIR, 'index.html');
+    // 检查同级文件夹是否有 img-preview.html
+    const indexPath = path.join(SCRIPT_DIR, 'img-preview.html');
     if (!fs.existsSync(indexPath)) {
-      url = `https://blog.luckly-mjw.cn/tool-show/img-preview-script/index.html?port=${PORT}`;
+      url = `https://blog.luckly-mjw.cn/tool-show/img-preview-script/img-preview.html?port=${PORT}`;
     } 
     openBrowser(url);
     console.log(`图片预览服务器运行在 ${url}`);
