@@ -1,8 +1,43 @@
+#!/usr/bin/env node
+
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 const url = require('url');
+
+// 显示帮助信息
+function showHelp() {
+  const helpText = `
+图片预览服务器 - 用于预览目录中的图片文件
+
+用法:
+  img-preview [选项]
+
+选项:
+  -p, --port <端口>    指定服务器端口 (默认: 20000-25000 之间的随机端口)
+  -d, --dir <目录>     指定要扫描的图片目录 (默认: 脚本所在目录)
+  -h, --help           显示此帮助信息
+
+示例:
+  img-preview                              # 使用默认设置启动服务器
+  img-preview -p 8080                      # 指定端口为 8080
+  img-preview -d ./images                 # 指定扫描目录为 ./images
+  img-preview --port=8080 --dir=./images  # 使用等号形式指定参数
+  img-preview -p 8080 -d ./images         # 组合使用多个参数
+
+支持的图片格式:
+  .jpg, .jpeg, .png, .gif, .bmp, .webp, .svg
+
+说明:
+  - 服务器启动后会自动打开浏览器访问预览页面
+  - 如果未指定端口，将使用 20000-25000 之间的随机端口
+  - 如果未指定目录，将扫描脚本所在目录及其子目录
+  - 服务器会自动跳过 node_modules 和以 . 开头的目录
+`;
+  console.log(helpText);
+  process.exit(0);
+}
 
 // 解析命令行参数
 function parseArgs() {
@@ -13,7 +48,9 @@ function parseArgs() {
   };
   
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--port' || args[i] === '-p') {
+    if (args[i] === '--help' || args[i] === '-h') {
+      showHelp();
+    } else if (args[i] === '--port' || args[i] === '-p') {
       config.port = parseInt(args[i + 1]);
       i++;
     } else if (args[i] === '--dir' || args[i] === '-d') {
@@ -32,27 +69,6 @@ function parseArgs() {
 // 获取随机端口（20000-25000）
 function getRandomPort() {
   return Math.floor(Math.random() * (25000 - 20000 + 1)) + 20000;
-}
-
-// 解析命令行参数
-const config = parseArgs();
-
-// 确定端口
-const PORT = config.port || getRandomPort();
-
-// 确定扫描目录（默认是脚本所在目录）
-const SCRIPT_DIR = __dirname;
-let SCAN_DIR = config.dir ? path.resolve(config.dir) : SCRIPT_DIR;
-
-// 验证扫描目录是否存在
-if (!fs.existsSync(SCAN_DIR)) {
-  console.error(`错误: 指定的目录不存在: ${SCAN_DIR}`);
-  process.exit(1);
-}
-
-if (!fs.statSync(SCAN_DIR).isDirectory()) {
-  console.error(`错误: 指定的路径不是目录: ${SCAN_DIR}`);
-  process.exit(1);
 }
 
 // 支持的图片格式
@@ -313,9 +329,9 @@ function getAllImages(dir, baseDir = dir) {
 }
 
 // 处理 /api/images 路由
-async function handleApiImages(req, res) {
+async function handleApiImages(req, res, scanDir) {
   try {
-    const images = getAllImages(SCAN_DIR);
+    const images = getAllImages(scanDir);
     
     // 为每张图片添加尺寸信息
     const imagesWithDimensions = await Promise.all(
@@ -354,7 +370,7 @@ async function handleApiImages(req, res) {
     
     sendJSON(res, {
       success: true,
-      dir: SCAN_DIR,
+      dir: scanDir,
       data: imagesWithDimensions,
       total: imagesWithDimensions.length
     });
@@ -364,14 +380,14 @@ async function handleApiImages(req, res) {
 }
 
 // 处理图片请求
-function handleImage(req, res, imagePath) {
+function handleImage(req, res, imagePath, scanDir) {
   try {
     const decodedPath = decodeURIComponent(imagePath);
-    const fullPath = path.join(SCAN_DIR, decodedPath);
+    const fullPath = path.join(scanDir, decodedPath);
     
     // 安全检查，防止路径遍历攻击（跨平台兼容）
     const normalizedFullPath = path.normalize(path.resolve(fullPath));
-    const normalizedScanDir = path.normalize(path.resolve(SCAN_DIR));
+    const normalizedScanDir = path.normalize(path.resolve(scanDir));
     
     // 使用 toLowerCase() 确保 Windows 上的大小写不敏感比较
     if (!normalizedFullPath.toLowerCase().startsWith(normalizedScanDir.toLowerCase())) {
@@ -406,13 +422,13 @@ function handleImage(req, res, imagePath) {
 }
 
 // 处理静态文件服务
-function handleStaticFile(req, res, filePath) {
+function handleStaticFile(req, res, filePath, scriptDir) {
   try {
-    const fullPath = path.join(SCRIPT_DIR, filePath);
+    const fullPath = path.join(scriptDir, filePath);
     
     // 安全检查（跨平台兼容）
     const normalizedFullPath = path.normalize(path.resolve(fullPath));
-    const normalizedScriptDir = path.normalize(path.resolve(SCRIPT_DIR));
+    const normalizedScriptDir = path.normalize(path.resolve(scriptDir));
     
     // 使用 toLowerCase() 确保 Windows 上的大小写不敏感比较
     if (!normalizedFullPath.toLowerCase().startsWith(normalizedScriptDir.toLowerCase())) {
@@ -430,7 +446,7 @@ function handleStaticFile(req, res, filePath) {
       // 如果是目录，尝试查找 img-preview.html
       const indexPath = path.join(fullPath, 'img-preview.html');
       if (fs.existsSync(indexPath)) {
-        handleStaticFile(req, res, path.join(filePath, 'img-preview.html'));
+        handleStaticFile(req, res, path.join(filePath, 'img-preview.html'), scriptDir);
       } else {
         sendError(res, 'File not found', 404);
       }
@@ -485,49 +501,104 @@ function openBrowser(url) {
   });
 }
 
-// 创建 HTTP 服务器
-const server = http.createServer(async (req, res) => {
-  // 处理 OPTIONS 请求（CORS 预检）
-  if (req.method === 'OPTIONS') {
-    setCorsHeaders(res);
-    res.statusCode = 200;
-    res.end();
-    return;
-  }
-  
-  const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
-  
-  // 路由处理
-  if (pathname === '/api/images' && req.method === 'GET') {
-    await handleApiImages(req, res);
-  } else if (pathname.startsWith('/images/')) {
-    // 提取图片路径（去掉 /images/ 前缀）
-    const imagePath = pathname.substring('/images/'.length);
-    handleImage(req, res, imagePath);
-  } else {
-    // 静态文件服务
-    // 如果路径是 /，则返回 img-preview.html
-    const filePath = pathname === '/' ? '/img-preview.html' : pathname;
-    handleStaticFile(req, res, filePath);
-  }
-});
 
-// 启动服务器
-server.listen(PORT, () => {
+// 启动服务器的函数（可导出供模块使用）
+function startServer(options = {}) {
+  const {
+    port = null,
+    dir = null,
+    scriptDir = __dirname,
+    autoOpen = true
+  } = options;
 
-  
-  // 自动打开浏览器
-  setTimeout(() => {
-    let url = `http://localhost:${PORT}?port=${PORT}`;;
-    // 检查同级文件夹是否有 img-preview.html
-    const indexPath = path.join(SCRIPT_DIR, 'img-preview.html');
-    if (!fs.existsSync(indexPath)) {
-      url = `https://blog.luckly-mjw.cn/tool-show/img-preview-script/img-preview.html?port=${PORT}`;
-    } 
-    openBrowser(url);
-    console.log(`图片预览服务器运行在 ${url}`);
-    console.log(`正在扫描目录: ${SCAN_DIR}`);
-    console.log(`使用端口: ${PORT}`);
-  }, 500); // 延迟500ms确保服务器完全启动
-});
+  // 确定端口
+  const PORT = port || getRandomPort();
+
+  // 确定扫描目录（默认是脚本所在目录）
+  const SCRIPT_DIR = scriptDir;
+  let SCAN_DIR = dir ? path.resolve(dir) : SCRIPT_DIR;
+
+  // 验证扫描目录是否存在
+  if (!fs.existsSync(SCAN_DIR)) {
+    throw new Error(`指定的目录不存在: ${SCAN_DIR}`);
+  }
+
+  if (!fs.statSync(SCAN_DIR).isDirectory()) {
+    throw new Error(`指定的路径不是目录: ${SCAN_DIR}`);
+  }
+
+  // 创建 HTTP 服务器
+  const server = http.createServer(async (req, res) => {
+    // 处理 OPTIONS 请求（CORS 预检）
+    if (req.method === 'OPTIONS') {
+      setCorsHeaders(res);
+      res.statusCode = 200;
+      res.end();
+      return;
+    }
+
+    const parsedUrl = url.parse(req.url, true);
+    const pathname = parsedUrl.pathname;
+
+    // 路由处理
+    if (pathname === '/api/images' && req.method === 'GET') {
+      await handleApiImages(req, res, SCAN_DIR);
+    } else if (pathname.startsWith('/images/')) {
+      // 提取图片路径（去掉 /images/ 前缀）
+      const imagePath = pathname.substring('/images/'.length);
+      handleImage(req, res, imagePath, SCAN_DIR);
+    } else {
+      // 静态文件服务
+      // 如果路径是 /，则返回 img-preview.html
+      const filePath = pathname === '/' ? '/img-preview.html' : pathname;
+      handleStaticFile(req, res, filePath, SCRIPT_DIR);
+    }
+  });
+
+  // 启动服务器
+  return new Promise((resolve, reject) => {
+    server.listen(PORT, () => {
+      // 自动打开浏览器
+      if (autoOpen) {
+        setTimeout(() => {
+          let url = `http://localhost:${PORT}?port=${PORT}`;
+          // 检查同级文件夹是否有 img-preview.html
+          const indexPath = path.join(SCRIPT_DIR, 'img-preview.html');
+          if (!fs.existsSync(indexPath)) {
+            url = `https://blog.luckly-mjw.cn/tool-show/img-preview-script/img-preview.html?port=${PORT}`;
+          }
+          openBrowser(url);
+          console.log(`图片预览服务器运行在 ${url}`);
+          console.log(`正在扫描目录: ${SCAN_DIR}`);
+          console.log(`使用端口: ${PORT}`);
+        }, 500); // 延迟500ms确保服务器完全启动
+      }
+      resolve({ server, port: PORT, scanDir: SCAN_DIR });
+    });
+
+    server.on('error', reject);
+  });
+}
+
+// 如果直接运行此文件（不是作为模块导入），则启动服务器
+if (require.main === module) {
+  const config = parseArgs();
+  startServer({
+    port: config.port,
+    dir: config.dir,
+    scriptDir: __dirname,
+    autoOpen: true
+  }).catch(error => {
+    console.error('启动服务器失败:', error.message);
+    process.exit(1);
+  });
+}
+
+// 导出函数供模块使用
+module.exports = {
+  startServer,
+  parseArgs,
+  getRandomPort,
+  getAllImages,
+  getImageMetadata
+};
