@@ -369,11 +369,12 @@ function handleImage(req, res, imagePath) {
     const decodedPath = decodeURIComponent(imagePath);
     const fullPath = path.join(SCAN_DIR, decodedPath);
     
-    // 安全检查，防止路径遍历攻击
-    const normalizedFullPath = path.normalize(fullPath);
-    const normalizedScanDir = path.normalize(SCAN_DIR);
+    // 安全检查，防止路径遍历攻击（跨平台兼容）
+    const normalizedFullPath = path.normalize(path.resolve(fullPath));
+    const normalizedScanDir = path.normalize(path.resolve(SCAN_DIR));
     
-    if (!normalizedFullPath.startsWith(normalizedScanDir)) {
+    // 使用 toLowerCase() 确保 Windows 上的大小写不敏感比较
+    if (!normalizedFullPath.toLowerCase().startsWith(normalizedScanDir.toLowerCase())) {
       sendError(res, 'Access denied', 403);
       return;
     }
@@ -409,11 +410,12 @@ function handleStaticFile(req, res, filePath) {
   try {
     const fullPath = path.join(SCRIPT_DIR, filePath);
     
-    // 安全检查
-    const normalizedFullPath = path.normalize(fullPath);
-    const normalizedScriptDir = path.normalize(SCRIPT_DIR);
+    // 安全检查（跨平台兼容）
+    const normalizedFullPath = path.normalize(path.resolve(fullPath));
+    const normalizedScriptDir = path.normalize(path.resolve(SCRIPT_DIR));
     
-    if (!normalizedFullPath.startsWith(normalizedScriptDir)) {
+    // 使用 toLowerCase() 确保 Windows 上的大小写不敏感比较
+    if (!normalizedFullPath.toLowerCase().startsWith(normalizedScriptDir.toLowerCase())) {
       sendError(res, 'Access denied', 403);
       return;
     }
@@ -456,24 +458,27 @@ function handleStaticFile(req, res, filePath) {
   }
 }
 
-// 打开浏览器的函数
+// 打开浏览器的函数（跨平台兼容）
 function openBrowser(url) {
   const platform = process.platform;
   let command;
+  let shell = false;
   
   switch (platform) {
     case 'darwin': // macOS
       command = `open "${url}"`;
       break;
     case 'win32': // Windows
+      // Windows 上需要使用 cmd.exe 来执行 start 命令
       command = `start "" "${url}"`;
+      shell = true;
       break;
     default: // Linux 和其他
       command = `xdg-open "${url}"`;
       break;
   }
   
-  exec(command, (error) => {
+  exec(command, { shell }, (error) => {
     if (error) {
       console.warn('无法自动打开浏览器，请手动访问:', url);
     }
@@ -510,22 +515,24 @@ const server = http.createServer(async (req, res) => {
 
 // 启动服务器
 server.listen(PORT, () => {
-  const serverUrl = `http://localhost:${PORT}`;
-  console.log(`图片预览服务器运行在 ${serverUrl}`);
-  console.log(`正在扫描目录: ${SCAN_DIR}`);
-  console.log(`使用端口: ${PORT}`);
+
   
   // 自动打开浏览器
   setTimeout(() => {
+    let url = '';
     // 检查同级文件夹是否有 index.html
     const indexPath = path.join(SCRIPT_DIR, 'index.html');
     if (!fs.existsSync(indexPath)) {
       // 如果没有 index.html，打开远程 URL
-      const remoteUrl = `https://blog.luckly-mjw.cn/tool-show/img-preview-script/index.html?port=${PORT}`;
+      url = `https://blog.luckly-mjw.cn/tool-show/img-preview-script/index.html?port=${PORT}`;
       openBrowser(remoteUrl);
     } else {
       // 如果有 index.html，打开本地 URL
-      openBrowser(serverUrl);
+      url = `http://localhost:${PORT}?port=${PORT}`;
+      openBrowser(url);
     }
+    console.log(`图片预览服务器运行在 ${url}`);
+    console.log(`正在扫描目录: ${SCAN_DIR}`);
+    console.log(`使用端口: ${PORT}`);
   }, 500); // 延迟500ms确保服务器完全启动
 });
