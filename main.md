@@ -9,8 +9,8 @@
 
 
 ### 使用教程
-快速启动
-017.png
+脚本安装及使用
+npm install -g img-preview 
 
 排序功能
 003.png
@@ -57,4 +57,5 @@
 ### 安全性
 纯前端工具，所有数据部经过后端，没有安全性问题
 代码完全开源，无混淆，可查阅
+npm 地址：https://www.npmjs.com/package/img-preview-script
 git 仓库：https://github.com/Momo707577045/img-preview-script
