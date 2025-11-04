@@ -253,7 +253,11 @@ new Vue({
                 this.loading = true;
                 this.error = null;
                 
-                const response = await fetch('/api/images');
+                // 从 URL 获取端口并构建 API URL
+                new urlObj = new URL(window.location.href);
+                const port = urlObj.searchParams.get('port');
+                const apiUrl = `http://localhost:${port}/api/images`;
+                const response = await fetch(apiUrl);
                 const result = await response.json();
                 
                 if (result.success) {

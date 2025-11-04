@@ -93,24 +93,6 @@ function sendError(res, message, statusCode = 500) {
   sendJSON(res, { success: false, error: message }, statusCode);
 }
 
-// 读取请求体
-function readRequestBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
-    req.on('end', () => {
-      try {
-        resolve(body ? JSON.parse(body) : {});
-      } catch (e) {
-        resolve({});
-      }
-    });
-    req.on('error', reject);
-  });
-}
-
 // 读取文件的前几个字节（用于解析图片尺寸）
 function readImageHeader(filePath, bytes) {
   return new Promise((resolve, reject) => {
