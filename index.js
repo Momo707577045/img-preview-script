@@ -10,6 +10,7 @@ new Vue({
         sortOrder: 'asc',
         backgroundType: 'gray',
         isResizing: false,
+        isInitializingSort: false, // 标志：是否正在初始化排序设置（避免初始化时触发保存）
         hoverPreview: {
             show: false,
             image: null,
@@ -249,6 +250,20 @@ return \`<InfraBaseImgBox :image="images['\${key}']" />\`;`,
             if (!this.isInitializingTemplate) {
                 this.saveJsCodeToStorage();
             }
+        },
+        
+        // 监听排序方式变化
+        sortBy() {
+            if (!this.isInitializingSort) {
+                this.saveSortSettings();
+            }
+        },
+        
+        // 监听排序顺序变化
+        sortOrder() {
+            if (!this.isInitializingSort) {
+                this.saveSortSettings();
+            }
         }
     },
     
@@ -257,6 +272,8 @@ return \`<InfraBaseImgBox :image="images['\${key}']" />\`;`,
         this.loadTemplateFromStorage();
         // 从 localStorage 恢复JS代码设置
         this.loadJsCodeFromStorage();
+        // 从 localStorage 恢复排序设置
+        this.loadSortSettings();
         
         await this.loadImages();
         this.bindKeyboardEvents();
@@ -1149,6 +1166,42 @@ return \`<InfraBaseImgBox :image="images['\${key}']" />\`;`,
             return {};
         },
         
+        // 从 localStorage 加载排序设置
+        loadSortSettings() {
+            this.isInitializingSort = true; // 标记为初始化阶段
+            
+            try {
+                const savedSortBy = localStorage.getItem('sortBy');
+                const savedSortOrder = localStorage.getItem('sortOrder');
+                
+                // 恢复排序方式
+                if (savedSortBy !== null) {
+                    this.sortBy = savedSortBy === 'null' ? null : savedSortBy;
+                }
+                
+                // 恢复排序顺序
+                if (savedSortOrder !== null) {
+                    this.sortOrder = savedSortOrder;
+                }
+            } catch (error) {
+                console.error('加载排序设置失败:', error);
+            } finally {
+                // 使用 $nextTick 确保所有 watch 都已执行完毕后再取消标志
+                this.$nextTick(() => {
+                    this.isInitializingSort = false;
+                });
+            }
+        },
+        
+        // 保存排序设置到 localStorage
+        saveSortSettings() {
+            try {
+                localStorage.setItem('sortBy', this.sortBy || 'null');
+                localStorage.setItem('sortOrder', this.sortOrder || 'asc');
+            } catch (error) {
+                console.error('保存排序设置失败:', error);
+            }
+        }
 
     }
 });
