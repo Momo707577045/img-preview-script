@@ -52,6 +52,21 @@ new Vue({
             'css-url': "background-image: url('{path}');",
             'path-only': '{path}'
         },
+        // JS代码自由组织功能
+        useJsCode: false, // 是否使用JS代码模式
+        // <TaImgBox :image="images[\'{name}\']" class="absolute top-100px left-40px" />
+        jsCodeTemplate: `// 用户可以在这里编写JavaScript代码来处理图片数据
+// 图片对象包含以下属性：
+// - image.path: 文件路径
+// - image.name: 完整文件名
+// - image.url: 图片URL
+// - image.width: 图片宽度
+// - image.height: 图片高度
+// - image.size: 文件大小（字节）
+// 
+// 示例代码：
+const key = image.path.replace(/\\//g, '_').split('.')[0];
+return \`<InfraBaseImgBox :image="images['\${key}']" />\`;`,
     },
     
     computed: {
@@ -220,12 +235,28 @@ new Vue({
             if (!this.isInitializingTemplate) {
                 this.saveTemplateToStorage();
             }
+        },
+        
+        // 监听JS代码模板变化
+        jsCodeTemplate() {
+            if (!this.isInitializingTemplate) {
+                this.saveJsCodeToStorage();
+            }
+        },
+        
+        // 监听JS代码模式切换
+        useJsCode() {
+            if (!this.isInitializingTemplate) {
+                this.saveJsCodeToStorage();
+            }
         }
     },
     
     async mounted() {
         // 从 localStorage 恢复代码模板设置
         this.loadTemplateFromStorage();
+        // 从 localStorage 恢复JS代码设置
+        this.loadJsCodeFromStorage();
         
         await this.loadImages();
         this.bindKeyboardEvents();
@@ -396,8 +427,14 @@ new Vue({
         
         // 复制图片代码
         async copyImageCode(image) {
-            // 使用自定义模板生成代码
-            const code = this.generateCodeFromTemplate(image);
+            let code;
+            if (this.useJsCode) {
+                // 使用JS代码模式
+                code = this.generateCodeFromJs(image);
+            } else {
+                // 使用模板模式
+                code = this.generateCodeFromTemplate(image);
+            }
             this.copyText(code);
         },
         
@@ -421,6 +458,53 @@ new Vue({
             code = code.replace(/\{ext\}/g, ext || '');
             
             return code;
+        },
+        
+        // 根据JS代码生成代码
+        generateCodeFromJs(image) {
+            if (!image) return '';
+            
+            try {
+                // 准备图片数据的副本，避免用户代码修改原始数据
+                // 预计算一些便捷属性
+                const nameWithoutExt = image.name.replace(/\.[^/.]+$/, '') || '';
+                const ext = image.name.split('.').pop() || '';
+                
+                const imageData = {
+                    path: image.path || '',
+                    name: image.name || '',
+                    url: image.url || '',
+                    width: image.width || 0,
+                    height: image.height || 0,
+                    size: image.size || 0,
+                    // 添加一些便捷的计算属性
+                    nameWithoutExt: nameWithoutExt,
+                    ext: ext,
+                    formattedSize: this.formatFileSize(image.size || 0)
+                };
+                
+                // 使用Function构造器安全地执行用户代码
+                // 用户代码应该返回一个字符串
+                const userCode = this.jsCodeTemplate || 'return image.path;';
+                
+                // 创建一个函数，接收image参数
+                const codeFunction = new Function('image', `
+                    ${userCode}
+                `);
+                
+                // 执行函数并获取返回值
+                const result = codeFunction(imageData);
+                
+                // 如果返回的不是字符串，尝试转换为字符串
+                if (typeof result !== 'string') {
+                    return String(result);
+                }
+                
+                return result;
+            } catch (error) {
+                console.error('JS代码执行错误:', error);
+                return `// 代码执行错误: ${error.message}\n// 图片路径: ${image.path}`;
+            }
         },
         
         // 应用预设模板
@@ -474,6 +558,42 @@ new Vue({
             }
         },
         
+        // 从 localStorage 加载JS代码设置
+        loadJsCodeFromStorage() {
+            this.isInitializingTemplate = true;
+            
+            try {
+                const savedUseJsCode = localStorage.getItem('useJsCode');
+                const savedJsCodeTemplate = localStorage.getItem('jsCodeTemplate');
+                
+                // 恢复JS代码模式状态
+                if (savedUseJsCode !== null) {
+                    this.useJsCode = savedUseJsCode === 'true';
+                }
+                
+                // 恢复JS代码模板
+                if (savedJsCodeTemplate !== null) {
+                    this.jsCodeTemplate = savedJsCodeTemplate;
+                }
+            } catch (error) {
+                console.error('加载JS代码设置失败:', error);
+            } finally {
+                this.$nextTick(() => {
+                    this.isInitializingTemplate = false;
+                });
+            }
+        },
+        
+        // 保存JS代码设置到 localStorage
+        saveJsCodeToStorage() {
+            try {
+                localStorage.setItem('useJsCode', String(this.useJsCode));
+                localStorage.setItem('jsCodeTemplate', this.jsCodeTemplate || '');
+            } catch (error) {
+                console.error('保存JS代码设置失败:', error);
+            }
+        },
+        
         // 重置预设模板
         resetPresetTemplates() {
             if (confirm('确定要重置当前预设模板吗？')) {
@@ -484,7 +604,13 @@ new Vue({
         
         // 生成预览代码
         generatePreviewCode() {
-            return this.generateCodeFromTemplate(this.images?.length > 0 ? this.images[0] : null);
+            const previewImage = this.filteredImages?.length > 0 ? this.filteredImages[this.currentImageIndex] : null;
+            if (!previewImage) return '';
+            if (this.useJsCode) {
+                return this.generateCodeFromJs(previewImage);
+            } else {
+                return this.generateCodeFromTemplate(previewImage);
+            }
         },
 
         async copyText(text) {
