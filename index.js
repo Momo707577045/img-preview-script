@@ -96,6 +96,10 @@ return \`<InfraBaseImgBox :image="images['\${key}']" />\`;`,
                         aValue = a.size || 0;
                         bValue = b.size || 0;
                         break;
+                    case 'created':
+                        aValue = a.created ? new Date(a.created).getTime() : 0;
+                        bValue = b.created ? new Date(b.created).getTime() : 0;
+                        break;
                     default:
                         return 0;
                 }
@@ -164,6 +168,10 @@ return \`<InfraBaseImgBox :image="images['\${key}']" />\`;`,
                         case 'size':
                             aValue = a.size || 0;
                             bValue = b.size || 0;
+                            break;
+                        case 'created':
+                            aValue = a.created ? new Date(a.created).getTime() : 0;
+                            bValue = b.created ? new Date(b.created).getTime() : 0;
                             break;
                         default:
                             return 0;
@@ -450,6 +458,23 @@ return \`<InfraBaseImgBox :image="images['\${key}']" />\`;`,
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             
             return Math.round(bytes / Math.pow(k, i) * 10) / 10 + ' ' + sizes[i];
+        },
+        
+        // 格式化日期时间
+        formatDateTime(date) {
+            if (!date) return '';
+            
+            const d = new Date(date);
+            if (isNaN(d.getTime())) return '';
+            
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            const seconds = String(d.getSeconds()).padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
         },
         
         // 滚动到顶部

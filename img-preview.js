@@ -316,6 +316,7 @@ function getAllImages(dir, baseDir = dir) {
             fullPath: filePath,
             size: stats.size,
             modified: stats.mtime,
+            created: stats.birthtime || stats.mtime, // 创建时间，如果不可用则使用修改时间
             url: `/images/${encodeURIComponent(relativePath.replace(/\\/g, '/'))}`
           });
         }

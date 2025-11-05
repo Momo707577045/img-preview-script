@@ -1,6 +1,6 @@
 {
   "name": "img-preview-script",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "图片预览工具 - 用于预览目录中的图片文件",
   "main": "img-preview.js",
   "bin": {

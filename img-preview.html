@@ -589,7 +589,7 @@
         font-size: 10px;
         color: #666;
         position: relative;
-        padding-bottom: 30px;
+        padding-bottom: 24px;
       }
 
       .image-name {
@@ -628,6 +628,12 @@
 
       .image-size {
         color: #666;
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      .image-created {
+        color: #999;
         font-size: 11px;
         font-weight: 500;
       }
@@ -1145,6 +1151,26 @@
                 </button>
               </div>
 
+              <!-- 创建时间排序 -->
+              <div class="sort-group">
+                <button
+                  class="sort-btn asc"
+                  :class="{ active: sortBy === 'created' && sortOrder === 'asc' }"
+                  @click="setSortAsc('created')"
+                  title="创建升序"
+                >
+                  创建↑
+                </button>
+                <button
+                  class="sort-btn desc"
+                  :class="{ active: sortBy === 'created' && sortOrder === 'desc' }"
+                  @click="setSortDesc('created')"
+                  title="创建降序"
+                >
+                  创建↓
+                </button>
+              </div>
+
               <!-- 清除排序 -->
               <button
                 class="sort-btn clear"
@@ -1249,7 +1275,16 @@
                 <div class="image-info">
                   <div class="image-name" @click.stop="copyText(image.name)">{{ image.name }}</div>
                   <div class="image-path" :title="image.path" @click.stop="copyText(image.path)">{{ image.path }}</div>
+                  <div
+                    class="image-created"
+                    v-if="image.created"
+                    @click.stop="copyText(formatDateTime(image.created))"
+                    :title="formatDateTime(image.created)"
+                  >
+                    创建时间：{{ formatDateTime(image.created) }}
+                  </div>
                   <div class="image-meta">
+                  
                     <span
                       class="image-dimensions"
                       v-if="image.width && image.height"
