@@ -339,6 +339,27 @@ return \`<InfraBaseImgBox :image="images['\${key}']" />\`;`,
             window.open(image.url, '_blank');
         },
         
+        // 打开文件夹
+        async openFolder(image) {
+            try {
+                // 从 URL 获取端口并构建 API URL
+                const urlObj = new URL(window.location.href);
+                const port = urlObj.searchParams.get('port');
+                const apiUrl = `http://localhost:${port}/api/open-folder?path=${encodeURIComponent(image.path)}`;
+                
+                const response = await fetch(apiUrl);
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showToast('文件夹已打开');
+                } else {
+                    this.showToast('打开文件夹失败: ' + result.error);
+                }
+            } catch (error) {
+                this.showToast('打开文件夹失败: ' + error.message);
+            }
+        },
+        
         // 切换图片选中状态
         toggleImageSelection(image) {
             const index = this.selectedImages.indexOf(image.path);

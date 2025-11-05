@@ -379,6 +379,112 @@ async function handleApiImages(req, res, scanDir) {
   }
 }
 
+// 打开文件夹（跨平台兼容）
+function openFolder(folderPath) {
+  return new Promise((resolve, reject) => {
+    const platform = process.platform;
+    let command;
+    let shell = false;
+    
+    // 验证文件夹路径是否存在
+    if (!fs.existsSync(folderPath)) {
+      reject(new Error(`文件夹不存在: ${folderPath}`));
+      return;
+    }
+    
+    const stats = fs.statSync(folderPath);
+    if (!stats.isDirectory()) {
+      reject(new Error(`路径不是文件夹: ${folderPath}`));
+      return;
+    }
+    
+    switch (platform) {
+      case 'darwin': // macOS
+        command = `open "${folderPath}"`;
+        break;
+      case 'win32': // Windows
+        // Windows 上使用 explorer 命令打开文件夹
+        command = `explorer "${folderPath}"`;
+        shell = true;
+        break;
+      default: // Linux 和其他
+        command = `xdg-open "${folderPath}"`;
+        break;
+    }
+    
+    exec(command, { shell }, (error) => {
+      // Windows 上的 explorer 命令即使成功打开文件夹，也可能返回非零退出码
+      // 这是 Windows 的已知行为，所以我们忽略这个错误
+      if (error && platform !== 'win32') {
+        reject(new Error(`无法打开文件夹: ${error.message}`));
+      } else {
+        // Windows 上，如果路径验证通过，通常都能成功打开文件夹
+        // 即使 explorer 返回错误码，我们也认为操作成功
+        resolve();
+      }
+    });
+  });
+}
+
+// 处理 /api/open-folder 路由
+async function handleApiOpenFolder(req, res, scanDir) {
+  try {
+    const parsedUrl = url.parse(req.url, true);
+    const imagePath = parsedUrl.query.path;
+    
+    if (!imagePath) {
+      sendError(res, '缺少 path 参数', 400);
+      return;
+    }
+    
+    // 解码路径
+    const decodedPath = decodeURIComponent(imagePath);
+    
+    // 构建完整路径
+    const fullPath = path.join(scanDir, decodedPath);
+    
+    // 安全检查，防止路径遍历攻击（跨平台兼容）
+    const normalizedFullPath = path.normalize(path.resolve(fullPath));
+    const normalizedScanDir = path.normalize(path.resolve(scanDir));
+    
+    // 使用 toLowerCase() 确保 Windows 上的大小写不敏感比较
+    if (!normalizedFullPath.toLowerCase().startsWith(normalizedScanDir.toLowerCase())) {
+      sendError(res, 'Access denied', 403);
+      return;
+    }
+    
+    // 获取文件所在的文件夹路径
+    let folderPath;
+    if (fs.existsSync(fullPath)) {
+      const stats = fs.statSync(fullPath);
+      if (stats.isDirectory()) {
+        folderPath = fullPath;
+      } else {
+        folderPath = path.dirname(fullPath);
+      }
+    } else {
+      // 如果文件不存在，使用路径的目录部分
+      folderPath = path.dirname(fullPath);
+      
+      // 如果目录也不存在，尝试使用相对路径的目录部分
+      if (!fs.existsSync(folderPath)) {
+        folderPath = path.join(scanDir, path.dirname(decodedPath));
+      }
+    }
+    
+    // 打开文件夹
+    await openFolder(folderPath);
+    
+    sendJSON(res, {
+      success: true,
+      message: '文件夹已打开',
+      folderPath: folderPath
+    });
+  } catch (error) {
+    sendError(res, error.message, 500);
+  }
+}
+
 // 处理图片请求
 function handleImage(req, res, imagePath, scanDir) {
   try {
@@ -543,6 +649,8 @@ function startServer(options = {}) {
     // 路由处理
     if (pathname === '/api/images' && req.method === 'GET') {
       await handleApiImages(req, res, SCAN_DIR);
+    } else if (pathname === '/api/open-folder' && req.method === 'GET') {
+      await handleApiOpenFolder(req, res, SCAN_DIR);
     } else if (pathname.startsWith('/images/')) {
       // 提取图片路径（去掉 /images/ 前缀）
       const imagePath = pathname.substring('/images/'.length);

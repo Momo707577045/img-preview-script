@@ -656,7 +656,6 @@
       .copy-code-btn {
         position: absolute;
         bottom: 4px;
-        left: 4px;
         right: 4px;
         background: rgba(40, 167, 69, 0.9);
         color: white;
@@ -667,9 +666,35 @@
         font-size: 11px;
         transition: all 0.2s;
         z-index: 10;
+        white-space: nowrap;
       }
 
       .copy-code-btn:hover {
+        background: rgba(33, 136, 56, 0.9);
+        transform: scale(1.02);
+      }
+
+      .open-folder-btn {
+        position: absolute;
+        bottom: 4px;
+        left: 4px;
+        background: rgba(40, 167, 69, 0.9);
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+        transition: all 0.2s;
+        z-index: 10;
+        white-space: nowrap;
+        min-width: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .open-folder-btn:hover {
         background: rgba(33, 136, 56, 0.9);
         transform: scale(1.02);
       }
@@ -1207,6 +1232,13 @@
                   :title="isImageSelected(image) ? '取消选中' : '选中'"
                 >
                   {{ isImageSelected(image) ? '📍' : '📌' }}
+                </button>
+                <button
+                  class="open-folder-btn"
+                  @click.stop="openFolder(image)"
+                  title="打开文件夹"
+                >
+                打开文件夹
                 </button>
                 <button
                   class="copy-code-btn"

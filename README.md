@@ -250,7 +250,17 @@ img-preview -h
 
 支持在新标签页中打开图片，方便使用浏览器原始能力查看图片细节
 
-![新 tab 打开功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/011.png)
+![新 tab 打开功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/018.png)
+
+
+### 打开所在文件夹
+
+点击每张图片下方的“打开文件夹”按钮，可以在本地资源管理器中快速定位该图片所在的目录，无需手动查找，大幅提升工作效率。此功能兼容 Windows、macOS 和 Linux 操作系统。
+
+![打开所在文件夹功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/019.png)
+
+
+![新 tab 打开功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/019.png)
 
 ### 图片详情及其点击复制功能
 
