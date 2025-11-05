@@ -24,13 +24,13 @@
 - **一键复制**：生成的代码可直接复制到剪贴板，无缝集成到开发工作流
 
 
-![功能介绍](https://upyun.luckly-mjw.cn/Assets/img-preview-script/002.png)
+![功能介绍](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/002.png)
 
 ## 需求背景
 
 项目中图片众多，文件夹层级多，不方便快速查阅。传统的文件浏览器需要逐层打开文件夹，效率低下。本工具提供了一种更高效的图片查看方式，支持一次性扫描目录下所有图片，并提供丰富的预览和管理功能。
 
-![需求背景](https://upyun.luckly-mjw.cn/Assets/img-preview-script/001.png)
+![需求背景](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/001.png)
 
 ## 使用教程
 
@@ -130,13 +130,13 @@ npm run img-preview
 - **体积排序**：按文件大小排序
 - **创建时间排序**：按文件创建时间排序
 
-![排序功能](https://upyun.luckly-mjw.cn/Assets/img-preview-script/003.png)
+![排序功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/003.png)
 
 ### 文件名过滤功能
 
 在搜索框中输入关键词，可以快速过滤出包含该关键词的图片文件，支持实时搜索。
 
-![文件名过滤功能](https://upyun.luckly-mjw.cn/Assets/img-preview-script/004.png)
+![文件名过滤功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/004.png)
 
 ### 图片背景切换功能
 
@@ -146,34 +146,34 @@ npm run img-preview
 - **灰色背景**：中性背景，通用性强
 - **棋盘格背景**：透明背景标识，方便查看带透明度的 PNG 图片
 
-![图片背景切换功能 - 白色](https://upyun.luckly-mjw.cn/Assets/img-preview-script/005.png)
-![图片背景切换功能 - 灰色](https://upyun.luckly-mjw.cn/Assets/img-preview-script/006.png)
-![图片背景切换功能 - 棋盘格](https://upyun.luckly-mjw.cn/Assets/img-preview-script/007.png)
+![图片背景切换功能 - 白色](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/005.png)
+![图片背景切换功能 - 灰色](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/006.png)
+![图片背景切换功能 - 棋盘格](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/007.png)
 
 ### 钉住功能
 
 可以将重要的图片钉在顶部，方便随时查看。钉住的图片会始终显示在列表顶部，不受排序影响。
 
-![钉住功能](https://upyun.luckly-mjw.cn/Assets/img-preview-script/008.png)
+![钉住功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/008.png)
 
 ### 图片预览
 
 点击图片可以进入大图预览模式，方便查看图片细节。
 
-![图片预览](https://upyun.luckly-mjw.cn/Assets/img-preview-script/009.png)
+![图片预览](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/009.png)
 
 ### 新 tab 打开功能
 
 支持在新标签页中打开图片，方便使用浏览器原始能力查看图片细节
 
-![新 tab 打开功能](https://upyun.luckly-mjw.cn/Assets/img-preview-script/018.png)
+![新 tab 打开功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/018.png)
 
 
 ### 打开所在文件夹
 
 点击每张图片下方的“打开文件夹”按钮，可以在本地资源管理器中快速定位该图片所在的目录，无需手动查找，大幅提升工作效率。此功能兼容 Windows、macOS 和 Linux 操作系统。
 
-![打开所在文件夹功能](https://upyun.luckly-mjw.cn/Assets/img-preview-script/019.png)
+![打开所在文件夹功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/019.png)
 
 ### 图片详情及其点击复制功能
 
@@ -184,13 +184,13 @@ npm run img-preview
 - 文件大小
 
 
-![图片详情及其点击复制功能](https://upyun.luckly-mjw.cn/Assets/img-preview-script/010.png)
+![图片详情及其点击复制功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/010.png)
 
 ### 文件夹过滤功能
 
 可以按文件夹进行过滤，只显示指定文件夹下的图片，方便管理大型项目的图片资源。
 
-![文件夹过滤功能](https://upyun.luckly-mjw.cn/Assets/img-preview-script/012.png)
+![文件夹过滤功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/012.png)
 
 # 代码生成功能
 
@@ -248,8 +248,8 @@ npm run img-preview
 
 所有预设模板都支持编辑和自定义，修改后会自动保存到本地存储。
 
-![代码生成功能 - 预设模板1](https://upyun.luckly-mjw.cn/Assets/img-preview-script/014.png)
-![代码生成功能 - 预设模板2](https://upyun.luckly-mjw.cn/Assets/img-preview-script/013.png)
+![代码生成功能 - 预设模板1](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/014.png)
+![代码生成功能 - 预设模板2](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/013.png)
 
 #### 生成函数自定义
 
@@ -291,7 +291,7 @@ const {name} = () => <img src="{path}" width={width} height={height} />
 import {name} from '{path}';
 ```
 
-![代码生成功能 - 生成函数自定义](https://upyun.luckly-mjw.cn/Assets/img-preview-script/015.png)
+![代码生成功能 - 生成函数自定义](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/015.png)
 
 #### 点击复制生成的代码
 
@@ -304,7 +304,7 @@ import {name} from '{path}';
 4. 点击复制按钮，代码自动复制到剪贴板
 5. 在代码编辑器中粘贴即可使用
 
-![代码生成功能 - 点击复制生成的代码](https://upyun.luckly-mjw.cn/Assets/img-preview-script/016.png)
+![代码生成功能 - 点击复制生成的代码](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/016.png)
 
 ## 安全性
 
