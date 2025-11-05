@@ -80,20 +80,6 @@ yarn add -D img-preview-script
 npm run img-preview
 ```
 
-#### 基本使用
-
-安装完成后，在任意目录下运行：
-
-```bash
-# 全局安装方式
-img-preview
-
-# 项目依赖安装方式
-npm run img-preview
-```
-
-脚本会自动启动本地服务器（默认使用 20000-25000 之间的随机端口）并打开浏览器，展示当前目录下的所有图片。
-
 #### 支持的参数
 
 | 参数 | 简写 | 说明 | 默认值 |
@@ -103,68 +89,6 @@ npm run img-preview
 | `--help` | `-h` | 显示帮助信息 | - |
 
 #### 使用示例
-
-**1. 使用默认设置（随机端口，扫描当前目录）**
-
-全局安装方式：
-```bash
-img-preview
-```
-
-项目依赖安装方式（需要在 package.json 中手动配置）：
-```json
-{
-  "scripts": {
-    "img-preview": "img-preview"
-  }
-}
-```
-然后运行：
-```bash
-npm run img-preview
-```
-
-**2. 指定端口**
-
-全局安装方式：
-```bash
-img-preview -p 8080
-```
-
-项目依赖安装方式（需要在 package.json 中手动配置）：
-```json
-{
-  "scripts": {
-    "img-preview": "img-preview -p 8080"
-  }
-}
-```
-然后运行：
-```bash
-npm run img-preview
-```
-
-**3. 指定扫描目录**
-
-全局安装方式：
-```bash
-img-preview -d ./images
-```
-
-项目依赖安装方式（需要在 package.json 中手动配置）：
-```json
-{
-  "scripts": {
-    "img-preview": "img-preview -d ./images"
-  }
-}
-```
-然后运行：
-```bash
-npm run img-preview
-```
-
-**4. 组合使用多个参数**
 
 全局安装方式：
 ```bash
@@ -184,26 +108,17 @@ img-preview -p 8080 -d ./images
 npm run img-preview
 ```
 
-**5. 查看帮助信息**
-```bash
-img-preview -h
-```
-
-#### 支持的图片格式
-
-- `.jpg` / `.jpeg`
-- `.png`
-- `.gif`
-- `.bmp`
-- `.webp`
-- `.svg`
-
 #### 注意事项
 
 - 服务器启动后会自动打开浏览器访问预览页面
 - 如果未指定端口，将使用 20000-25000 之间的随机端口
 - 如果未指定目录，将扫描执行脚本时的工作目录及其子目录
 - 服务器会自动跳过 `node_modules`、`dist` 和以 `.` 开头的目录（如 `.git`）
+- 支持 `.jpg` / `.jpeg`、`.png`、`.gif`、`.bmp`、`.webp`、`.svg` 等主流图片格式。
+
+
+# 功能详解
+
 
 ### 排序功能
 
@@ -259,9 +174,6 @@ img-preview -h
 
 ![打开所在文件夹功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/019.png)
 
-
-![新 tab 打开功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/019.png)
-
 ### 图片详情及其点击复制功能
 
 附带详细的图片信息，点击对于区域，可直接复制相关信息
@@ -279,7 +191,7 @@ img-preview -h
 
 ![文件夹过滤功能](https://github.com/Momo707577045/img-preview-script/blob/main/markdown/012.png)
 
-### 代码生成功能
+# 代码生成功能
 
 这是本工具的核心功能，专为提升开发效率而设计。
 
@@ -404,6 +316,17 @@ import {name} from '{path}';
 - **npm 地址**：https://www.npmjs.com/package/img-preview-script
 - **Git 仓库**：https://github.com/Momo707577045/img-preview-script
 
+## 持续迭代与社区支持
+
+本项目会持续更新和优化，欢迎大家提出宝贵意见与建议。如果在使用过程中遇到任何问题、或有想法与需求，欢迎通过以下方式反馈交流：
+
+- **GitHub Issues**：在 [GitHub 仓库](https://github.com/Momo707577045/img-preview-script/issues) 提交 issue
+- **GitHub Discussions**：参与项目讨论或建议：https://github.com/Momo707577045/img-preview-script/discussions
+- **PR**：欢迎有能力的开发者提交 Pull Request，共同完善工具
+- 也可在 [npm 页面](https://www.npmjs.com/package/img-preview-script) 留言或点赞支持
+
+您的每一个反馈都是本工具不断进步的重要动力！
+
 ## 技术特点
 
 - ✅ 零依赖，纯 Node.js 实现
@@ -412,6 +335,8 @@ import {name} from '{path}';
 - ✅ 响应式设计，适配不同屏幕
 - ✅ 本地存储，设置自动保存
 - ✅ 开源免费，MIT 协议
+
+
 
 ## 许可证
 
