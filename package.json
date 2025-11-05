@@ -1,6 +1,6 @@
 {
   "name": "img-preview-script",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "图片预览工具 - 用于预览目录中的图片文件",
   "main": "img-preview.js",
   "bin": {
@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node img-preview.js",
-    "dev": "nodemon img-preview.js"
+    "dev": "nodemon img-preview.js",
+    "postinstall": "node postinstall.js"
   },
   "dependencies": {},
   "devDependencies": {
@@ -30,12 +31,13 @@
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/Momo707577045/img-preview-script"
   },
   "files": [
     "index.js",
     "img-preview.js",
     "img-preview.html",
+    "postinstall.js",
     "README.md"
   ]
 }
