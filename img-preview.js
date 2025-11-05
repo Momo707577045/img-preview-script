@@ -33,7 +33,7 @@ function showHelp() {
   - 服务器启动后会自动打开浏览器访问预览页面
   - 如果未指定端口，将使用 20000-25000 之间的随机端口
   - 如果未指定目录，将扫描执行脚本时的工作目录及其子目录
-  - 服务器会自动跳过 node_modules 和以 . 开头的目录
+  - 服务器会自动跳过 node_modules、dist 和以 . 开头的目录
 `;
   console.log(helpText);
   process.exit(0);
@@ -300,8 +300,8 @@ function getAllImages(dir, baseDir = dir) {
       const stat = fs.statSync(filePath);
       
       if (stat.isDirectory()) {
-        // 跳过node_modules和.git等目录
-        if (!file.startsWith('.') && file !== 'node_modules') {
+        // 跳过node_modules、dist和.git等目录
+        if (!file.startsWith('.') && file !== 'node_modules' && file !== 'dist') {
           images = images.concat(getAllImages(filePath, baseDir));
         }
       } else if (stat.isFile()) {
