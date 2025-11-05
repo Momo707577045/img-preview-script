@@ -571,7 +571,7 @@ function startServer(options = {}) {
           console.log(`图片预览服务器运行在 ${url}`);
           console.log(`正在扫描目录: ${SCAN_DIR}`);
           console.log(`使用端口: ${PORT}`);
-        }, 500); // 延迟500ms确保服务器完全启动
+        }, 100); // 延迟500ms确保服务器完全启动
       }
       resolve({ server, port: PORT, scanDir: SCAN_DIR });
     });

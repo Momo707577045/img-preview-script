@@ -58,17 +58,13 @@ img-preview
 
 ```bash
 npm install --save-dev img-preview-script
+# 或使用 pnpm
+pnpm add -D img-preview-script
+# 或使用 yarn
+yarn add -D img-preview-script
 ```
 
-安装完成后，**会自动在项目的 `package.json` 的 `scripts` 中添加 `img-preview` 命令**，你可以通过以下方式使用：
-
-```bash
-npm run img-preview
-```
-
-**自动添加的脚本示例：**
-
-安装完成后，你的 `package.json` 会包含类似以下的配置：
+安装完成后，在项目的 `package.json` 的 `scripts` 中手动添加 `img-preview` 命令：
 
 ```json
 {
@@ -78,7 +74,11 @@ npm run img-preview
 }
 ```
 
-> 💡 **提示**：如果项目的 `package.json` 中已存在 `img-preview` 命令，则不会重复添加，避免覆盖已有的配置。
+然后就可以通过以下方式使用：
+
+```bash
+npm run img-preview
+```
 
 #### 基本使用
 
@@ -111,7 +111,15 @@ npm run img-preview
 img-preview
 ```
 
-项目依赖安装方式：
+项目依赖安装方式（需要在 package.json 中手动配置）：
+```json
+{
+  "scripts": {
+    "img-preview": "img-preview"
+  }
+}
+```
+然后运行：
 ```bash
 npm run img-preview
 ```
@@ -151,6 +159,10 @@ img-preview -d ./images
   }
 }
 ```
+然后运行：
+```bash
+npm run img-preview
+```
 
 **4. 组合使用多个参数**
 
@@ -159,13 +171,17 @@ img-preview -d ./images
 img-preview -p 8080 -d ./images
 ```
 
-项目依赖安装方式：
+项目依赖安装方式（需要在 package.json 中手动配置）：
 ```json
 {
   "scripts": {
     "img-preview": "img-preview -p 8080 -d ./images"
   }
 }
+```
+然后运行：
+```bash
+npm run img-preview
 ```
 
 **5. 查看帮助信息**

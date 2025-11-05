@@ -1,6 +1,6 @@
 {
   "name": "img-preview-script",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "description": "图片预览工具 - 用于预览目录中的图片文件",
   "main": "img-preview.js",
   "bin": {
@@ -8,8 +8,7 @@
   },
   "scripts": {
     "start": "node img-preview.js",
-    "dev": "nodemon img-preview.js",
-    "postinstall": "node postinstall.js"
+    "dev": "nodemon img-preview.js"
   },
   "dependencies": {},
   "devDependencies": {
@@ -37,7 +36,6 @@
     "index.js",
     "img-preview.js",
     "img-preview.html",
-    "postinstall.js",
     "README.md"
   ]
 }
